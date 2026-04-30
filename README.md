@@ -9,7 +9,7 @@ Local desktop app that automatically mosaics faces in your photos. Drop in image
 
 ## Install
 
-Download from [Releases](https://github.com/n4yabi12/FaceVeil/releases/latest):
+Download from [Releases](https://github.com/nyabi021/FaceVeil/releases/latest):
 
 - **macOS** (Apple Silicon, macOS 12+) — open the `.dmg`, drag to Applications
 - **Windows** (x64, Windows 10+) — unzip, run `FaceVeil.exe`
@@ -21,11 +21,20 @@ Download from [Releases](https://github.com/n4yabi12/FaceVeil/releases/latest):
 3. Choose an output folder
 4. Click **Start**
 
-Originals are never modified. Enable **Review each image** to inspect detections before saving.
+Originals are never modified. Enable **Review each image** to inspect detections before saving, exclude false positives, add missed faces, or skip individual images.
 
 Supported inputs: `.jpg` `.jpeg` `.png` `.bmp` `.tif` `.tiff` `.webp`.
 
 ## Build from source
+
+Requires CMake 3.24+, a C++20 compiler, Qt 6 available to CMake, OpenCV 4, ONNX Runtime, and SCRFD ONNX model files.
+
+Put SCRFD models in `models/` before running the app, for example:
+
+- `models/2.5g_bnkps.onnx` — Fast
+- `models/10g_bnkps.onnx` — Accurate
+
+Model files are not committed to this repository. You can also launch the app and use **Browse…** to select a custom SCRFD `.onnx` file.
 
 ### macOS
 
@@ -35,7 +44,11 @@ cmake --build build
 open build/FaceVeil.app
 ```
 
-Requires Qt 6, OpenCV 4, ONNX Runtime (`brew install qt opencv onnxruntime`).
+Install dependencies with Homebrew:
+
+```bash
+brew install cmake opencv onnxruntime
+```
 
 ### Windows (PowerShell)
 
