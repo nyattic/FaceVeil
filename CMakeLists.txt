@@ -12,6 +12,7 @@ set(CMAKE_AUTOUIC ON)
 
 find_package(Qt6 REQUIRED COMPONENTS Widgets)
 find_package(OpenCV REQUIRED COMPONENTS core imgcodecs imgproc)
+include(CTest)
 
 if(WIN32)
     set(ONNXRUNTIME_ROOT "" CACHE PATH "Path to the ONNX Runtime package root")
@@ -139,3 +140,20 @@ add_executable(faceveil_inspect_model
 )
 
 target_link_libraries(faceveil_inspect_model PRIVATE onnxruntime::onnxruntime)
+
+if(BUILD_TESTING)
+    add_executable(faceveil_tests
+        tests/test_core.cpp
+        src/ImageScanner.cpp
+        src/Mosaic.cpp
+        include/faceveil/FaceDetection.hpp
+        include/faceveil/ImageScanner.hpp
+        include/faceveil/Mosaic.hpp
+    )
+    target_include_directories(faceveil_tests PRIVATE include)
+    target_link_libraries(faceveil_tests PRIVATE
+        Qt6::Core
+        ${OpenCV_LIBS}
+    )
+    add_test(NAME faceveil_tests COMMAND faceveil_tests)
+endif()

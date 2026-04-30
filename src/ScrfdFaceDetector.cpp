@@ -3,6 +3,7 @@
 #include <opencv2/imgproc.hpp>
 
 #include <algorithm>
+#include <array>
 #include <filesystem>
 #include <limits>
 #include <stdexcept>
@@ -58,6 +59,37 @@ namespace faceveil
         if (inputNames_.empty() || outputNames_.size() < 6)
         {
             throw std::runtime_error("The selected model does not look like an SCRFD ONNX model.");
+        }
+
+        const auto inputInfo = session_.GetInputTypeInfo(0).GetTensorTypeAndShapeInfo();
+        if (inputInfo.GetElementType() != ONNX_TENSOR_ELEMENT_DATA_TYPE_FLOAT)
+        {
+            throw std::runtime_error("SCRFD model input must be a float tensor.");
+        }
+        const auto inputShape = inputInfo.GetShape();
+        if (inputShape.size() != 4)
+        {
+            throw std::runtime_error("SCRFD model input must be a 4D NCHW tensor.");
+        }
+        const auto dimensionMatches = [](int64_t actual, int64_t expected)
+        {
+            return actual < 0 || actual == expected;
+        };
+        if (!dimensionMatches(inputShape[0], 1) ||
+            !dimensionMatches(inputShape[1], kChannels) ||
+            !dimensionMatches(inputShape[2], inputSize_) ||
+            !dimensionMatches(inputShape[3], inputSize_))
+        {
+            throw std::runtime_error("SCRFD model input shape must be compatible with [1, 3, 640, 640].");
+        }
+
+        for (size_t i = 0; i < std::min<size_t>(outputNames_.size(), kStrides.size() * 2U); ++i)
+        {
+            const auto outputInfo = session_.GetOutputTypeInfo(i).GetTensorTypeAndShapeInfo();
+            if (outputInfo.GetElementType() != ONNX_TENSOR_ELEMENT_DATA_TYPE_FLOAT)
+            {
+                throw std::runtime_error("SCRFD model outputs must be float tensors.");
+            }
         }
 
         inputNamePtrs_.reserve(inputNames_.size());

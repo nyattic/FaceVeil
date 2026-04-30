@@ -14,10 +14,13 @@
 #include <opencv2/imgcodecs.hpp>
 #include <opencv2/imgproc.hpp>
 
+#include <algorithm>
+#include <cctype>
 #include <exception>
 #include <filesystem>
 #include <random>
 #include <system_error>
+#include <unordered_map>
 
 namespace faceveil
 {
@@ -146,6 +149,44 @@ namespace faceveil
             return isWithinRoot(lexical, safeRoot) || lexical == safeRoot.lexically_normal();
         }
 
+        std::string destinationKey(const std::filesystem::path &path)
+        {
+            auto key = path.lexically_normal().string();
+#if defined(_WIN32) || defined(__APPLE__)
+            std::ranges::transform(key, key.begin(), [](unsigned char ch)
+            {
+                return static_cast<char>(std::tolower(ch));
+            });
+#endif
+            return key;
+        }
+
+        bool hasDestinationCollisions(const std::vector<ScanResult> &images,
+                                      const std::filesystem::path &safeRoot,
+                                      QStringList &messages)
+        {
+            std::unordered_map<std::string, std::filesystem::path> firstSourceForDestination;
+            for (const auto &item: images)
+            {
+                const auto destination = (safeRoot / item.relativePath).lexically_normal();
+                const auto key = destinationKey(destination);
+                const auto [it, inserted] = firstSourceForDestination.emplace(key, item.sourcePath);
+                if (!inserted)
+                {
+                    messages.push_back(QString("Output name collision: '%1' and '%2' would both write to '%3'")
+                        .arg(QString::fromStdString(it->second.string()),
+                             QString::fromStdString(item.sourcePath.string()),
+                             QString::fromStdString(destination.string())));
+                    if (messages.size() >= 10)
+                    {
+                        messages.push_back("Additional output name collisions omitted.");
+                        return true;
+                    }
+                }
+            }
+            return !messages.empty();
+        }
+
         std::filesystem::path uniqueTempPath(const std::filesystem::path &destination)
         {
             static thread_local std::mt19937_64 rng{std::random_device{}()};
@@ -262,7 +303,14 @@ namespace faceveil
             emit logMessage("Scanning images...");
             const auto images = scanImages(inputs_, recursive_);
             const int total = static_cast<int>(images.size());
+            emit logMessage(QString("Preflight: found %1 supported image(s).").arg(total));
             emit progressChanged(0, total);
+
+            if (cancelled_.load(std::memory_order_acquire))
+            {
+                emit finished(true);
+                return;
+            }
 
             if (total == 0)
             {
@@ -287,6 +335,19 @@ namespace faceveil
             const auto safeRoot = canonicalError
                                       ? outputRoot.lexically_normal()
                                       : canonicalRoot;
+
+            QStringList collisionMessages;
+            if (hasDestinationCollisions(images, safeRoot, collisionMessages))
+            {
+                emit logMessage("Refusing to run because multiple inputs would write to the same output path.");
+                for (const auto &message: collisionMessages)
+                {
+                    emit logMessage(message);
+                }
+                emit finished(false);
+                return;
+            }
+            emit logMessage("Preflight: output paths are unique.");
 
             int completed = 0;
             int index = 0;
@@ -355,6 +416,12 @@ namespace faceveil
                     continue;
                 }
 
+                if (cancelled_.load(std::memory_order_acquire))
+                {
+                    emit finished(true);
+                    return;
+                }
+
                 const long long pixelCount =
                         static_cast<long long>(image.cols) * static_cast<long long>(image.rows);
                 if (pixelCount > kMaxPixelCount)
@@ -370,8 +437,14 @@ namespace faceveil
 
                 emit stageChanged(index, total, "Detecting", fileName);
                 const auto detected = detector_->detect(image, scoreThreshold_, nmsThreshold_);
+                if (cancelled_.load(std::memory_order_acquire))
+                {
+                    emit finished(true);
+                    return;
+                }
                 FaceDetections finalFaces = detected;
-                bool skipThisImage = false;
+                bool doNotSaveThisImage = false;
+                bool copyOriginalThisImage = false;
 
                 if (reviewEnabled_ && reviewReceiver_)
                 {
@@ -403,8 +476,11 @@ namespace faceveil
                                 cancelled_.store(true, std::memory_order_release);
                                 emit finished(true);
                                 return;
-                            case ReviewDecision::Skip:
-                                skipThisImage = true;
+                            case ReviewDecision::DoNotSave:
+                                doNotSaveThisImage = true;
+                                break;
+                            case ReviewDecision::CopyOriginal:
+                                copyOriginalThisImage = true;
                                 break;
                             case ReviewDecision::Save:
 
@@ -416,7 +492,20 @@ namespace faceveil
                     }
                 }
 
-                if (skipThisImage)
+                if (cancelled_.load(std::memory_order_acquire))
+                {
+                    emit finished(true);
+                    return;
+                }
+
+                if (doNotSaveThisImage)
+                {
+                    emit logMessage(QString("Skipped without saving: %1").arg(fileName));
+                    emit progressChanged(++completed, total);
+                    continue;
+                }
+
+                if (copyOriginalThisImage)
                 {
                     emit stageChanged(index, total, "Saving", fileName);
                     if (!atomicImwrite(destination, image))
@@ -433,6 +522,12 @@ namespace faceveil
 
                 emit stageChanged(index, total, "Applying mosaic", fileName);
                 applyMosaic(image, finalFaces, mosaicBlockSize_, paddingRatio_);
+
+                if (cancelled_.load(std::memory_order_acquire))
+                {
+                    emit finished(true);
+                    return;
+                }
 
                 emit stageChanged(index, total, "Saving", fileName);
                 if (!atomicImwrite(destination, image))

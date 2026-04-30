@@ -387,8 +387,10 @@ namespace faceveil
         root->addWidget(canvas_, 1);
 
         hintLabel_ = new QLabel(
-            "Click a box to toggle · Drag an empty area to add · "
-            "Click a blue box to delete · ⌘Z / ⌘⇧Z to undo/redo", this);
+            QString("Click a box to toggle · Drag an empty area to add · "
+                    "Click a blue box to delete · %1 / %2 to undo/redo")
+                .arg(QKeySequence(QKeySequence::Undo).toString(QKeySequence::NativeText),
+                     QKeySequence(QKeySequence::Redo).toString(QKeySequence::NativeText)), this);
         hintLabel_->setStyleSheet("color: #6B7280; font-size: 12px;");
         root->addWidget(hintLabel_);
 
@@ -406,8 +408,11 @@ namespace faceveil
         redoButton->setCursor(Qt::PointingHandCursor);
         redoButton->setEnabled(false);
 
-        auto *skip = new QPushButton("Skip (copy original)", this);
-        skip->setCursor(Qt::PointingHandCursor);
+        auto *doNotSave = new QPushButton("Do Not Save", this);
+        doNotSave->setCursor(Qt::PointingHandCursor);
+
+        auto *copyOriginal = new QPushButton("Copy Original", this);
+        copyOriginal->setCursor(Qt::PointingHandCursor);
 
         auto *save = new QPushButton("Save && Next", this);
         save->setObjectName("primaryButton");
@@ -418,7 +423,8 @@ namespace faceveil
         buttonRow->addWidget(undoButton);
         buttonRow->addWidget(redoButton);
         buttonRow->addStretch(1);
-        buttonRow->addWidget(skip);
+        buttonRow->addWidget(doNotSave);
+        buttonRow->addWidget(copyOriginal);
         buttonRow->addWidget(save);
         root->addLayout(buttonRow);
 
@@ -429,9 +435,14 @@ namespace faceveil
         });
         connect(undoButton, &QPushButton::clicked, this, [this] { canvas_->undo(); });
         connect(redoButton, &QPushButton::clicked, this, [this] { canvas_->redo(); });
-        connect(skip, &QPushButton::clicked, this, [this]
+        connect(doNotSave, &QPushButton::clicked, this, [this]
         {
-            decision_ = ReviewDecision::Skip;
+            decision_ = ReviewDecision::DoNotSave;
+            accept();
+        });
+        connect(copyOriginal, &QPushButton::clicked, this, [this]
+        {
+            decision_ = ReviewDecision::CopyOriginal;
             accept();
         });
         connect(save, &QPushButton::clicked, this, [this]
@@ -458,5 +469,11 @@ namespace faceveil
         res.decision = decision_;
         res.finalBoxes = canvas_->finalBoxes();
         return res;
+    }
+
+    void ReviewDialog::reject()
+    {
+        decision_ = ReviewDecision::CancelAll;
+        QDialog::reject();
     }
 }

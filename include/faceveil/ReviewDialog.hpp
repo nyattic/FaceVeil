@@ -30,6 +30,8 @@ namespace faceveil
 
         [[nodiscard]] ReviewResult result() const;
 
+        void reject() override;
+
     private:
         ReviewCanvas *canvas_ = nullptr;
         QLabel *hintLabel_ = nullptr;

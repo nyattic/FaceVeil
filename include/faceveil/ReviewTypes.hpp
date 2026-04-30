@@ -9,7 +9,8 @@ namespace faceveil
     enum class ReviewDecision
     {
         Save,
-        Skip,
+        DoNotSave,
+        CopyOriginal,
         CancelAll,
     };
 

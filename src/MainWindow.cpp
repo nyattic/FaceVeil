@@ -14,6 +14,7 @@
 #include <QLabel>
 #include <QLineEdit>
 #include <QListWidget>
+#include <QMessageBox>
 #include <QMimeData>
 #include <QPlainTextEdit>
 #include <QCloseEvent>
@@ -228,6 +229,7 @@ namespace faceveil
         constexpr double kDefaultNmsThreshold = 0.4;
         constexpr int kDefaultBlockSize = 28;
         constexpr double kDefaultPadding = 0.18;
+        constexpr qint64 kMaxCustomModelBytes = 512LL * 1024LL * 1024LL;
 
         QString defaultOutputDirectory()
         {
@@ -281,6 +283,43 @@ namespace faceveil
             auto *label = new QLabel(text, parent);
             label->setProperty("role", "fieldLabel");
             return label;
+        }
+
+        bool customModelFileIsAllowed(QWidget *parent, const QString &path)
+        {
+            const QFileInfo info(path);
+            if (!info.exists() || !info.isFile())
+            {
+                QMessageBox::warning(parent, "Invalid Model", "Choose an existing ONNX model file.");
+                return false;
+            }
+            if (info.suffix().compare("onnx", Qt::CaseInsensitive) != 0)
+            {
+                QMessageBox::warning(parent, "Invalid Model", "The selected model must use the .onnx extension.");
+                return false;
+            }
+            if (info.size() > kMaxCustomModelBytes)
+            {
+                QMessageBox::warning(parent, "Model Too Large",
+                                     "The selected ONNX file is larger than 512 MB. "
+                                     "Choose a smaller SCRFD model.");
+                return false;
+            }
+            return true;
+        }
+
+        bool confirmTrustedCustomModel(QWidget *parent, const QString &path)
+        {
+            const QFileInfo info(path);
+            const auto answer = QMessageBox::question(
+                parent,
+                "Load Custom Model",
+                QString("Only load ONNX models from sources you trust.\n\nModel: %1\nSize: %2 MB\n\nContinue?")
+                    .arg(info.fileName())
+                    .arg(QString::number(info.size() / 1024.0 / 1024.0, 'f', 1)),
+                QMessageBox::Yes | QMessageBox::No,
+                QMessageBox::No);
+            return answer == QMessageBox::Yes;
         }
 
         QFrame *makeCard(QWidget *parent)
@@ -663,6 +702,10 @@ namespace faceveil
                                                        "ONNX Models (*.onnx)");
         if (!path.isEmpty())
         {
+            if (!customModelFileIsAllowed(this, path) || !confirmTrustedCustomModel(this, path))
+            {
+                return;
+            }
             const QFileInfo info(path);
             modelCombo_->addItem("Custom — " + info.fileName(), info.absoluteFilePath());
             modelCombo_->setCurrentIndex(modelCombo_->count() - 1);
@@ -709,6 +752,11 @@ namespace faceveil
         if (modelPath.isEmpty() || !QFileInfo::exists(modelPath))
         {
             appendLog("Choose a valid SCRFD ONNX model first.");
+            return;
+        }
+        const auto currentLabel = modelCombo_ ? modelCombo_->currentText() : QString();
+        if (currentLabel.startsWith("Custom") && !customModelFileIsAllowed(this, modelPath))
+        {
             return;
         }
 
@@ -798,7 +846,7 @@ namespace faceveil
     {
         if (worker_ != nullptr)
         {
-            appendLog("Stopping after the current image…");
+            appendLog("Stopping after the current processing step…");
             statusLabel_->setText("Stopping…");
             QMetaObject::invokeMethod(worker_, "cancel", Qt::QueuedConnection);
         }
