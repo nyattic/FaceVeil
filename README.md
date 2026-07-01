@@ -1,15 +1,15 @@
 # FaceVeil
 
-![Release](https://img.shields.io/github/v/release/nyabi021/FaceVeil?style=flat&color=6366f1)
-![Downloads](https://img.shields.io/github/downloads/nyabi021/FaceVeil/total?style=flat&color=10b981)
-![Last Commit](https://img.shields.io/github/last-commit/nyabi021/FaceVeil?style=flat&color=f59e0b)
+![Release](https://img.shields.io/github/v/release/nyattic/FaceVeil?style=flat&color=6366f1)
+![Downloads](https://img.shields.io/github/downloads/nyattic/FaceVeil/total?style=flat&color=10b981)
+![Last Commit](https://img.shields.io/github/last-commit/nyattic/FaceVeil?style=flat&color=f59e0b)
 ![License](https://img.shields.io/badge/app%20code-PolyForm%20Noncommercial%201.0.0-8b5cf6?style=flat)
 
 Local desktop app that automatically mosaics faces in your photos. Drop in images or folders, pick a model, get anonymized copies — nothing ever leaves your machine.
 
 ## Install
 
-Download from [Releases](https://github.com/nyabi021/FaceVeil/releases/latest):
+Download from [Releases](https://github.com/nyattic/FaceVeil/releases/latest):
 
 - **macOS** (Apple Silicon, macOS 12+) — open the `.dmg`, drag to Applications
 - **Windows** (x64, Windows 10+) — unzip, run `FaceVeil.exe`
