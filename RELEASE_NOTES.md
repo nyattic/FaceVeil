@@ -1,3 +1,10 @@
+# FaceVeil 1.1.1
+
+Lowers the default mosaic block size from 28 to 14 pixels for a finer default
+mosaic.
+
+---
+
 # FaceVeil 1.1.0
 
 Adds full metadata and quality preservation for photographers, a rounded mask
