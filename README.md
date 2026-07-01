@@ -90,7 +90,7 @@ Copyright © 2026 Nyabi.
 
 **SCRFD models** — the built-in models are **not distributed with FaceVeil**; the app downloads them on first use directly from their source. They originate from [InsightFace](https://github.com/deepinsight/insightface) and are available for **non-commercial research use only**, under their own terms separate from the application license. See the [InsightFace Model Zoo](https://github.com/deepinsight/insightface/blob/master/model_zoo/README.md) for details.
 
-**Third-party runtime dependencies** — Qt (LGPL-3.0 / GPL-3.0 / commercial), OpenCV (Apache-2.0), ONNX Runtime (MIT), spdlog (MIT). Each retains its own license.
+**Third-party runtime dependencies** — Qt (LGPL-3.0 / GPL-3.0 / commercial), OpenCV (Apache-2.0), ONNX Runtime (MIT), spdlog and {fmt} (MIT). Each retains its own license; the full texts are in [THIRD_PARTY_NOTICES.txt](THIRD_PARTY_NOTICES.txt) and are bundled with each release.
 
 ## Citation
 

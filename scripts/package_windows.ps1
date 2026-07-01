@@ -156,6 +156,9 @@ if ($worldDlls) {
     Write-Host "Bundled $(@($moduleDlls).Count) OpenCV module DLL(s)."
 }
 
+# ── Third-party notices ────────────────────────────────────────────
+Copy-Item (Join-Path $RootDir "THIRD_PARTY_NOTICES.txt") $DistDir -Force
+
 Write-Host ""
 Write-Host "✅ Packaged app: $DistDir"
 Write-Host "   Run with:     $DistDir\FaceVeil.exe"

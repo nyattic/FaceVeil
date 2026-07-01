@@ -153,6 +153,9 @@ while IFS= read -r dylib; do
   rewrite_rpath_dependencies_for "$dylib"
 done < <(find "$FRAMEWORKS_DIR" -type f -name '*.dylib')
 
+mkdir -p "$DIST_APP/Contents/Resources"
+cp "$ROOT_DIR/THIRD_PARTY_NOTICES.txt" "$DIST_APP/Contents/Resources/THIRD_PARTY_NOTICES.txt"
+
 # ── Sign ───────────────────────────────────────────────────────────
 SIGN_FLAGS=(--force --timestamp --options runtime)
 if [[ "$DISTRIBUTABLE" == "1" ]]; then
