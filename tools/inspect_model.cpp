@@ -2,7 +2,6 @@
 
 #include <filesystem>
 #include <iostream>
-#include <string>
 #include <vector>
 
 namespace {
@@ -38,7 +37,8 @@ int main(int argc, char* argv[]) {
         std::cout << "Inputs\n";
         for (size_t i = 0; i < session.GetInputCount(); ++i) {
             auto name = session.GetInputNameAllocated(i, allocator);
-            const auto info = session.GetInputTypeInfo(i).GetTensorTypeAndShapeInfo();
+            const auto typeInfo = session.GetInputTypeInfo(i);
+            const auto info = typeInfo.GetTensorTypeAndShapeInfo();
             std::cout << "  " << name.get() << " ";
             printShape(info.GetShape());
             std::cout << "\n";
@@ -47,7 +47,8 @@ int main(int argc, char* argv[]) {
         std::cout << "Outputs\n";
         for (size_t i = 0; i < session.GetOutputCount(); ++i) {
             auto name = session.GetOutputNameAllocated(i, allocator);
-            const auto info = session.GetOutputTypeInfo(i).GetTensorTypeAndShapeInfo();
+            const auto typeInfo = session.GetOutputTypeInfo(i);
+            const auto info = typeInfo.GetTensorTypeAndShapeInfo();
             std::cout << "  " << name.get() << " ";
             printShape(info.GetShape());
             std::cout << "\n";

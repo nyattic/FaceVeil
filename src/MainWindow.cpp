@@ -508,6 +508,16 @@ namespace faceveil
                 "Tweak detection and mosaic behavior. Defaults work for most photos.",
                 advancedBody_));
 
+            methodCombo_ = new QComboBox(advancedBody_);
+            methodCombo_->addItem("Mosaic (pixelate)", static_cast<int>(AnonymizationMethod::Mosaic));
+            methodCombo_->addItem("Gaussian blur", static_cast<int>(AnonymizationMethod::Blur));
+            methodCombo_->addItem("Solid fill (blackout)", static_cast<int>(AnonymizationMethod::Fill));
+            methodCombo_->setToolTip(
+                "How detected faces are obscured.\n"
+                "Mosaic = pixelation (block size below).\n"
+                "Gaussian blur = strong smoothing scaled to face size.\n"
+                "Solid fill = opaque black box, irreversible. Default: Mosaic");
+
             scoreThresholdSpin_ = new QDoubleSpinBox(advancedBody_);
             scoreThresholdSpin_->setRange(0.05, 0.99);
             scoreThresholdSpin_->setSingleStep(0.05);
@@ -551,6 +561,7 @@ namespace faceveil
             grid->setFormAlignment(Qt::AlignLeft | Qt::AlignTop);
             grid->setHorizontalSpacing(18);
             grid->setVerticalSpacing(10);
+            grid->addRow(makeFieldLabel("Anonymization", advancedBody_), methodCombo_);
             grid->addRow(makeFieldLabel("Score threshold", advancedBody_), scoreThresholdSpin_);
             grid->addRow(makeFieldLabel("NMS threshold", advancedBody_), nmsThresholdSpin_);
             grid->addRow(makeFieldLabel("Mosaic block size", advancedBody_), blockSizeSpin_);
@@ -815,6 +826,7 @@ namespace faceveil
                                       static_cast<float>(nmsThresholdSpin_->value()),
                                       blockSizeSpin_->value(),
                                       static_cast<float>(paddingSpin_->value()),
+                                      static_cast<AnonymizationMethod>(methodCombo_->currentData().toInt()),
                                       reviewCheck_->isChecked(),
                                       this,
                                       std::move(detectorForRun));
@@ -895,6 +907,7 @@ namespace faceveil
         nmsThresholdSpin_->setValue(kDefaultNmsThreshold);
         blockSizeSpin_->setValue(kDefaultBlockSize);
         paddingSpin_->setValue(kDefaultPadding);
+        methodCombo_->setCurrentIndex(0);
     }
 
     void MainWindow::closeEvent(QCloseEvent *event)
@@ -943,6 +956,12 @@ namespace faceveil
         blockSizeSpin_->setValue(settings.value("blockSize", kDefaultBlockSize).toInt());
         paddingSpin_->setValue(settings.value("padding", kDefaultPadding).toDouble());
 
+        const auto savedMethod = settings.value("method", 0).toInt();
+        if (methodCombo_ != nullptr && savedMethod >= 0 && savedMethod < methodCombo_->count())
+        {
+            methodCombo_->setCurrentIndex(savedMethod);
+        }
+
         if (settings.value("advancedExpanded", false).toBool())
         {
             advancedToggle_->setChecked(true);
@@ -979,6 +998,7 @@ namespace faceveil
         settings.setValue("nmsThreshold", nmsThresholdSpin_->value());
         settings.setValue("blockSize", blockSizeSpin_->value());
         settings.setValue("padding", paddingSpin_->value());
+        settings.setValue("method", methodCombo_ ? methodCombo_->currentIndex() : 0);
         settings.setValue("advancedExpanded", advancedToggle_ ? advancedToggle_->isChecked() : false);
         settings.endGroup();
     }
@@ -1014,6 +1034,7 @@ namespace faceveil
         startButton_->setEnabled(!processing);
         stopButton_->setEnabled(processing);
         modelCombo_->setEnabled(!processing);
+        methodCombo_->setEnabled(!processing);
         modelPathEdit_->setEnabled(!processing);
         outputDirEdit_->setEnabled(!processing);
         inputList_->setEnabled(!processing);

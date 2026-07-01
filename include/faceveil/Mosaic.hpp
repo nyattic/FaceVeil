@@ -6,5 +6,16 @@
 
 namespace faceveil
 {
-    void applyMosaic(const cv::Mat &image, const FaceDetections &detections, int blockSize, float paddingRatio);
+    enum class AnonymizationMethod
+    {
+        Mosaic,
+        Blur,
+        Fill,
+    };
+
+    void applyAnonymization(cv::Mat &image, const FaceDetections &detections,
+                            AnonymizationMethod method, int blockSize, float paddingRatio);
+
+    void applyMosaic(cv::Mat &image, const FaceDetections &detections,
+                     int blockSize, float paddingRatio);
 }

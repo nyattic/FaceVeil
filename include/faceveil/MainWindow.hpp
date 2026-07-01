@@ -87,6 +87,7 @@ namespace faceveil
         void saveSettings() const;
 
         QComboBox *modelCombo_ = nullptr;
+        QComboBox *methodCombo_ = nullptr;
         QLineEdit *modelPathEdit_ = nullptr;
         QLineEdit *outputDirEdit_ = nullptr;
         QListWidget *inputList_ = nullptr;

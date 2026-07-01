@@ -61,7 +61,8 @@ namespace faceveil
             throw std::runtime_error("The selected model does not look like an SCRFD ONNX model.");
         }
 
-        const auto inputInfo = session_.GetInputTypeInfo(0).GetTensorTypeAndShapeInfo();
+        const auto inputTypeInfo = session_.GetInputTypeInfo(0);
+        const auto inputInfo = inputTypeInfo.GetTensorTypeAndShapeInfo();
         if (inputInfo.GetElementType() != ONNX_TENSOR_ELEMENT_DATA_TYPE_FLOAT)
         {
             throw std::runtime_error("SCRFD model input must be a float tensor.");
@@ -85,7 +86,8 @@ namespace faceveil
 
         for (size_t i = 0; i < std::min<size_t>(outputNames_.size(), kStrides.size() * 2U); ++i)
         {
-            const auto outputInfo = session_.GetOutputTypeInfo(i).GetTensorTypeAndShapeInfo();
+            const auto outputTypeInfo = session_.GetOutputTypeInfo(i);
+            const auto outputInfo = outputTypeInfo.GetTensorTypeAndShapeInfo();
             if (outputInfo.GetElementType() != ONNX_TENSOR_ELEMENT_DATA_TYPE_FLOAT)
             {
                 throw std::runtime_error("SCRFD model outputs must be float tensors.");
@@ -181,59 +183,99 @@ namespace faceveil
             throw std::runtime_error("SCRFD output tensor count is too small.");
         }
 
+        struct StrideOutput
+        {
+            const Ort::Value *value = nullptr;
+            size_t elementCount = 0;
+        };
+
+        std::vector<StrideOutput> scoreOutputs;
+        std::vector<StrideOutput> bboxOutputs;
+        for (const auto &output: outputs)
+        {
+            if (!output.IsTensor())
+            {
+                continue;
+            }
+            const auto info = output.GetTensorTypeAndShapeInfo();
+            if (info.GetElementType() != ONNX_TENSOR_ELEMENT_DATA_TYPE_FLOAT)
+            {
+                continue;
+            }
+            const auto shape = info.GetShape();
+            if (shape.empty())
+            {
+                continue;
+            }
+            const auto elementCount = info.GetElementCount();
+            if (elementCount == 0 ||
+                elementCount > static_cast<size_t>(std::numeric_limits<int>::max()))
+            {
+                continue;
+            }
+            const auto lastDim = shape.back();
+            if (lastDim == 1)
+            {
+                scoreOutputs.push_back({&output, elementCount});
+            }
+            else if (lastDim == 4)
+            {
+                bboxOutputs.push_back({&output, elementCount});
+            }
+        }
+
         FaceDetections detections;
 
         for (size_t index = 0; index < featureMapCount; ++index)
         {
-            const auto &scoreTensor = outputs[index];
-            const auto &bboxTensor = outputs[index + featureMapCount];
-
-            if (!scoreTensor.IsTensor() || !bboxTensor.IsTensor())
-            {
-                continue;
-            }
-            const auto scoreInfo = scoreTensor.GetTensorTypeAndShapeInfo();
-            const auto bboxInfo = bboxTensor.GetTensorTypeAndShapeInfo();
-            if (scoreInfo.GetElementType() != ONNX_TENSOR_ELEMENT_DATA_TYPE_FLOAT ||
-                bboxInfo.GetElementType() != ONNX_TENSOR_ELEMENT_DATA_TYPE_FLOAT)
-            {
-                continue;
-            }
-
-            const auto scoreShape = scoreInfo.GetShape();
-            const auto bboxShape = bboxInfo.GetShape();
-            if (scoreShape.empty() || bboxShape.empty())
-            {
-                continue;
-            }
-
-            const auto scoreElements = scoreInfo.GetElementCount();
-            const auto bboxElements = bboxInfo.GetElementCount();
-
-            if (scoreElements == 0 ||
-                scoreElements > static_cast<size_t>(std::numeric_limits<int>::max()) ||
-                bboxElements > static_cast<size_t>(std::numeric_limits<int>::max()))
-            {
-                continue;
-            }
-            const auto scoreCount = static_cast<int>(scoreElements);
-            const auto bboxCount = static_cast<int>(bboxElements);
-            if (scoreCount <= 0 || bboxCount < scoreCount * 4)
-            {
-                continue;
-            }
-
             const int stride = kStrides[index];
             const int featureHeight = inputSize_ / stride;
             const int featureWidth = inputSize_ / stride;
             auto anchors = anchorCenters(featureHeight, featureWidth, stride);
             const int baseAnchorCount = static_cast<int>(anchors.size());
+            if (baseAnchorCount <= 0)
+            {
+                continue;
+            }
+
+            const StrideOutput *scoreMatch = nullptr;
+            for (const auto &candidate: scoreOutputs)
+            {
+                if (candidate.elementCount == static_cast<size_t>(baseAnchorCount) ||
+                    candidate.elementCount ==
+                        static_cast<size_t>(baseAnchorCount) * kMaxAnchorsPerLocation)
+                {
+                    scoreMatch = &candidate;
+                    break;
+                }
+            }
+
+            const StrideOutput *bboxMatch = nullptr;
+            if (scoreMatch != nullptr)
+            {
+                for (const auto &candidate: bboxOutputs)
+                {
+                    if (candidate.elementCount == scoreMatch->elementCount * 4U)
+                    {
+                        bboxMatch = &candidate;
+                        break;
+                    }
+                }
+            }
+
+            if (scoreMatch == nullptr || bboxMatch == nullptr)
+            {
+                throw std::runtime_error(
+                    "Could not match SCRFD score and box outputs for this model.");
+            }
+
+            const auto scoreCount = static_cast<int>(scoreMatch->elementCount);
             const int maxExpectedScores = baseAnchorCount * kMaxAnchorsPerLocation;
             if (scoreCount > maxExpectedScores)
             {
                 throw std::runtime_error("SCRFD output tensor shape is unexpectedly large.");
             }
-            if (baseAnchorCount > 0 && scoreCount > baseAnchorCount)
+            if (scoreCount > baseAnchorCount)
             {
                 const int repeats = std::max(1, scoreCount / baseAnchorCount);
                 std::vector<cv::Point2f> repeatedAnchors;
@@ -248,8 +290,8 @@ namespace faceveil
                 anchors = std::move(repeatedAnchors);
             }
 
-            const auto *scores = scoreTensor.GetTensorData<float>();
-            const auto *boxes = bboxTensor.GetTensorData<float>();
+            const auto *scores = scoreMatch->value->GetTensorData<float>();
+            const auto *boxes = bboxMatch->value->GetTensorData<float>();
             if (scores == nullptr || boxes == nullptr)
             {
                 continue;

@@ -1,5 +1,7 @@
 #pragma once
 
+#include "faceveil/Mosaic.hpp"
+
 #include <QObject>
 #include <QPointer>
 #include <QString>
@@ -25,6 +27,7 @@ namespace faceveil
                         float nmsThreshold,
                         int mosaicBlockSize,
                         float paddingRatio,
+                        AnonymizationMethod method,
                         bool reviewEnabled,
                         QObject *reviewReceiver,
                         std::shared_ptr<ScrfdFaceDetector> cachedDetector = {});
@@ -56,6 +59,7 @@ namespace faceveil
         float nmsThreshold_;
         int mosaicBlockSize_;
         float paddingRatio_;
+        AnonymizationMethod method_;
         bool reviewEnabled_;
         QPointer<QObject> reviewReceiver_;
         std::atomic<bool> cancelled_{false};

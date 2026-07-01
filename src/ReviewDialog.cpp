@@ -31,7 +31,6 @@ namespace faceveil
         };
 
         constexpr int kMinBoxPixels = 6;
-        constexpr int kHandleRadius = 5;
     }
 
     class ReviewCanvas final : public QWidget

@@ -93,6 +93,7 @@ target_link_libraries(FaceVeil PRIVATE
 # and make exploitation harder. All of these are widely supported and cheap.
 if(MSVC)
     target_compile_options(FaceVeil PRIVATE
+        /W4              # High warning level
         /guard:cf        # Control Flow Guard
         /GS              # Buffer security checks
         /sdl             # Additional security checks
@@ -105,6 +106,8 @@ if(MSVC)
     )
 else()
     target_compile_options(FaceVeil PRIVATE
+        -Wall
+        -Wextra
         -fstack-protector-strong
         -fno-strict-aliasing
         $<$<NOT:$<CONFIG:Debug>>:-D_FORTIFY_SOURCE=2>

@@ -261,6 +261,7 @@ namespace faceveil
                                      float nmsThreshold,
                                      int mosaicBlockSize,
                                      float paddingRatio,
+                                     AnonymizationMethod method,
                                      bool reviewEnabled,
                                      QObject *reviewReceiver,
                                      std::shared_ptr<ScrfdFaceDetector> cachedDetector)
@@ -272,6 +273,7 @@ namespace faceveil
           nmsThreshold_(nmsThreshold),
           mosaicBlockSize_(mosaicBlockSize),
           paddingRatio_(paddingRatio),
+          method_(method),
           reviewEnabled_(reviewEnabled),
           reviewReceiver_(reviewReceiver),
           detector_(std::move(cachedDetector))
@@ -521,7 +523,7 @@ namespace faceveil
                 }
 
                 emit stageChanged(index, total, "Applying mosaic", fileName);
-                applyMosaic(image, finalFaces, mosaicBlockSize_, paddingRatio_);
+                applyAnonymization(image, finalFaces, method_, mosaicBlockSize_, paddingRatio_);
 
                 if (cancelled_.load(std::memory_order_acquire))
                 {
