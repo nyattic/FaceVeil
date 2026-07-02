@@ -51,7 +51,7 @@ namespace redactly
             const QSize size = reader.size();
             if (!size.isValid() || size.width() <= 0 || size.height() <= 0)
             {
-                return {false, QCoreApplication::translate("redactly::ProcessorWorker", "cannot inspect image dimensions"), {}};
+                return {true, {}, {}};
             }
 
             const long long pixelCount =
