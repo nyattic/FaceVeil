@@ -5,7 +5,7 @@
 ![Last Commit](https://img.shields.io/github/last-commit/nyattic/Redactly?style=flat&color=f59e0b)
 ![License](https://img.shields.io/badge/license-GPL--3.0--or--later-8b5cf6?style=flat)
 
-Local desktop app that automatically mosaics faces in your photos. Drop in images or folders, pick a model, get anonymized copies — your photos are processed entirely on your machine and never uploaded.
+Local desktop app that automatically redacts faces and license plates in your photos. Drop in images or folders, choose what to detect, get anonymized copies — your photos are processed entirely on your machine and never uploaded.
 
 ## Install
 
@@ -15,14 +15,15 @@ Download from [Releases](https://github.com/nyattic/Redactly/releases/latest):
 - **Windows** (x64, Windows 10+) — unzip, run `Redactly.exe`
 - **Linux** (x86_64) — download the `.AppImage`, `chmod +x` it, and run it
 
-The first time you use a built-in model, Redactly downloads it once (3–17 MB) from Hugging Face and caches it; after that it runs offline.
+The first time you use a built-in model, Redactly downloads it once (3–17 MB) and caches it; after that it runs offline. The face models come from Hugging Face; the license plate model comes from the open-image-models project on GitHub.
 
 ## Use
 
 1. Drop images or folders onto the window
-2. Pick a model — **Fast** or **Accurate**
-3. Choose an output folder
-4. Click **Start**
+2. Choose what to detect — **Faces**, **License plates**, or **both**
+3. For faces, pick a model — **Fast** or **Accurate**
+4. Choose an output folder
+5. Click **Start**
 
 Originals are never modified. Enable **Review each image** to inspect detections before saving, exclude false positives, add missed faces, leave an image unsaved, or explicitly copy the original.
 
@@ -32,12 +33,13 @@ Supported inputs: `.jpg` `.jpeg` `.png` `.bmp` `.tif` `.tiff` `.webp`.
 
 ## Build from source
 
-Requires CMake 3.24+, a C++20 compiler, Qt 6 available to CMake (with the Linguist tools for UI translations), OpenCV 4, ONNX Runtime, spdlog, Exiv2 (optional, for metadata preservation), and SCRFD ONNX model files.
+Requires CMake 3.24+, a C++20 compiler, Qt 6 available to CMake (with the Linguist tools for UI translations), OpenCV 4, ONNX Runtime, spdlog, and Exiv2 (optional, for metadata preservation). The detection models (SCRFD for faces, YOLOv9 for license plates) are not build dependencies — the app downloads them on first use, or you can pre-place them (see below).
 
 The built-in models are **not bundled** and **not committed** to this repository. The app downloads them on first use (with an integrity check) and caches them under the platform data directory. To pre-place them for offline use, drop them in `models/`:
 
-- `models/2.5g_bnkps.onnx` — Fast
-- `models/10g_bnkps.onnx` — Accurate
+- `models/2.5g_bnkps.onnx` — Fast (faces)
+- `models/10g_bnkps.onnx` — Accurate (faces)
+- `models/yolo-v9-t-512-license-plates-end2end.onnx` — License plates
 
 You can also launch the app and use **Browse…** to select a custom SCRFD `.onnx` file.
 
@@ -63,7 +65,7 @@ brew install cmake qt opencv onnxruntime spdlog exiv2
 cmake -S . -B build-windows -G Ninja `
   -DCMAKE_BUILD_TYPE=Release `
   -DCMAKE_PREFIX_PATH="C:\Qt\6.11.0\msvc2022_64;C:\opencv\build" `
-  -DONNXRUNTIME_ROOT="C:\onnxruntime-win-x64-1.24.4"
+  -DONNXRUNTIME_ROOT="C:\onnxruntime-win-x64-1.20.1"
 cmake --build build-windows --config Release
 ```
 
@@ -99,7 +101,7 @@ Packaging scripts: [`scripts/package_macos.sh`](scripts/package_macos.sh), [`scr
 
 ## Privacy
 
-Your images never leave your device — they are read from disk, processed locally, and written to the output folder you pick. Redactly makes only two kinds of network request, and neither sends any image or personal data: a one-time download of the face-detection model (from Hugging Face) the first time you use a built-in model, and a check at launch against the GitHub Releases API to see whether a newer version exists. The update check can be turned off under **Advanced Options → Check for updates on startup**, and supplying your own model with **Browse…** avoids the model download entirely.
+Your images never leave your device — they are read from disk, processed locally, and written to the output folder you pick. Redactly makes only two kinds of network request, and neither sends any image or personal data: a one-time download of a detection model the first time you use each built-in model — the face models from Hugging Face, or the license plate model from the open-image-models project on GitHub — and a check at launch against the GitHub Releases API to see whether a newer version exists. The update check can be turned off under **Advanced Options → Check for updates on startup**, and supplying your own model with **Browse…** avoids the model download entirely.
 
 ## License
 
@@ -113,6 +115,8 @@ Redactly is free software: you can redistribute it and/or modify it under the te
 
 **SCRFD models** — the built-in models are **not distributed with Redactly**; the app downloads them on first use from a [Hugging Face mirror](https://huggingface.co/RuteNL/SCRFD-face-detection-ONNX). They originate from [InsightFace](https://github.com/deepinsight/insightface) and are available for **non-commercial research use only**, under their own terms separate from the application license (the mirror's Apache-2.0 tag does not override InsightFace's terms). See the [InsightFace Model Zoo](https://github.com/deepinsight/insightface/blob/master/model_zoo/README.md) for details.
 
+**License plate model** — the built-in license plate detector is **not distributed with Redactly**; the app downloads it on first use from the [open-image-models](https://github.com/ankandrew/open-image-models) project by ankandrew, which is MIT-licensed. It is a YOLOv9-architecture model (see [Citation](#citation)) and is downloaded at runtime and cached locally, under its upstream project's terms. Confirm the current terms with the open-image-models project before any commercial or redistribution use.
+
 **Third-party runtime dependencies** — Qt (LGPL-3.0 / GPL-3.0 / commercial), OpenCV (Apache-2.0), ONNX Runtime (MIT), Exiv2 (GPL-2.0-or-later) with its own dependencies (Brotli, Expat, inih, zlib, GNU gettext), spdlog and {fmt} (MIT). Each retains its own license; the full texts are in [THIRD_PARTY_NOTICES.txt](THIRD_PARTY_NOTICES.txt) and are bundled with each release.
 
 ## Citation
@@ -123,6 +127,15 @@ Redactly is free software: you can redistribute it and/or modify it under the te
   author={Jia Guo and Jiankang Deng and Alexandros Lattas and Stefanos Zafeiriou},
   year={2021},
   eprint={2105.04714},
+  archivePrefix={arXiv},
+  primaryClass={cs.CV}
+}
+
+@misc{wang2024yolov9,
+  title={YOLOv9: Learning What You Want to Learn Using Programmable Gradient Information},
+  author={Chien-Yao Wang and Hong-Yuan Mark Liao},
+  year={2024},
+  eprint={2402.13616},
   archivePrefix={arXiv},
   primaryClass={cs.CV}
 }
