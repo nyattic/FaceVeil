@@ -193,7 +193,8 @@ install(TARGETS FaceVeil
 
 if(UNIX AND NOT APPLE)
     install(FILES assets/faceveil.desktop DESTINATION share/applications)
-    install(FILES assets/icon.png DESTINATION share/pixmaps RENAME faceveil.png)
+    install(FILES assets/faceveil-512.png
+        DESTINATION share/icons/hicolor/512x512/apps RENAME faceveil.png)
 endif()
 
 add_executable(faceveil_inspect_model

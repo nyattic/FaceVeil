@@ -48,10 +48,10 @@ VERSION="${VERSION:-0.0.0}"
 install -Dm644 "$ROOT_DIR/THIRD_PARTY_NOTICES.txt" "$APPDIR/usr/share/doc/faceveil/THIRD_PARTY_NOTICES.txt"
 install -Dm644 "$ROOT_DIR/LICENSE" "$APPDIR/usr/share/doc/faceveil/LICENSE.txt"
 
-# linuxdeploy resolves the icon by the desktop file's Icon= name, so the file
-# must be named faceveil.png regardless of its (non-standard) source size.
+# linuxdeploy resolves the icon by the desktop file's Icon= name and only
+# accepts standard icon resolutions, so use the 512x512 asset named faceveil.png.
 ICON_STAGE="$BUILD_DIR/faceveil.png"
-cp "$ROOT_DIR/assets/icon.png" "$ICON_STAGE"
+cp "$ROOT_DIR/assets/faceveil-512.png" "$ICON_STAGE"
 
 # ── Fetch linuxdeploy + Qt plugin ──────────────────────────────────
 TOOLS_DIR="$BUILD_DIR/appimage-tools"
