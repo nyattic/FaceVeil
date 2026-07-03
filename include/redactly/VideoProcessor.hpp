@@ -1,5 +1,6 @@
 #pragma once
 
+#include "redactly/FaceDetection.hpp"
 #include "redactly/Mosaic.hpp"
 #include "redactly/Tracking.hpp"
 #include "redactly/VideoIo.hpp"
@@ -11,9 +12,6 @@
 
 namespace redactly
 {
-    class ScrfdFaceDetector;
-    class PlateDetector;
-
     struct VideoProcessOptions
     {
         float scoreThreshold = 0.5F;
@@ -24,6 +22,7 @@ namespace redactly
         MaskShape shape = MaskShape::Rectangle;
         bool softEdges = false;
         int crf = 18;
+        int analysisLongEdge = 960;
         TrackerConfig tracker;
         TrackPostProcessConfig postProcess;
     };
@@ -44,14 +43,14 @@ namespace redactly
     };
 
     using VideoProgressFn = std::function<void(int pass, qint64 frame, qint64 totalEstimate)>;
+    using VideoDetectFn = std::function<FaceDetections(const cv::Mat &frame)>;
 
     VideoProcessResult processVideo(const FfmpegTools &tools,
                                     const QString &sourcePath,
                                     const QString &destinationPath,
                                     const VideoInfo &info,
                                     const VideoProcessOptions &options,
-                                    ScrfdFaceDetector *faceDetector,
-                                    PlateDetector *plateDetector,
+                                    const VideoDetectFn &detect,
                                     const std::atomic<bool> &cancelled,
                                     const VideoProgressFn &progress = {});
 }

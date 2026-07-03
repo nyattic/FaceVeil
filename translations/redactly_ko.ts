@@ -837,6 +837,22 @@ Rounded = elliptical mask that follows the face and leaves corners untouched. De
         <source>Failed to process video %1: %2</source>
         <translation>동영상 처리 실패 %1: %2</translation>
     </message>
+    <message>
+        <source>Loading face detection model for video (%1 px)...</source>
+        <translation>동영상용 얼굴 탐지 모델 로드 중 (%1 px)...</translation>
+    </message>
+    <message>
+        <source>%1m %2s left</source>
+        <translation>%1분 %2초 남음</translation>
+    </message>
+    <message>
+        <source>%1s left</source>
+        <translation>%1초 남음</translation>
+    </message>
+    <message>
+        <source>Processed %1 frames in %2s (%3× real time): %4</source>
+        <translation>프레임 %1개를 %2초에 처리 (실시간의 %3배): %4</translation>
+    </message>
 </context>
 <context>
     <name>redactly::ReviewDialog</name>

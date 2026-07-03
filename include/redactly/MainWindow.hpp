@@ -151,6 +151,7 @@ namespace redactly
         QElapsedTimer runTimer_;
 
         std::shared_ptr<ScrfdFaceDetector> cachedDetector_;
+        std::shared_ptr<ScrfdFaceDetector> cachedVideoDetector_;
         QString cachedDetectorModelPath_;
         std::shared_ptr<PlateDetector> cachedPlateDetector_;
         QString cachedPlateModelPath_;

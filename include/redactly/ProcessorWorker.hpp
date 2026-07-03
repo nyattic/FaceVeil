@@ -50,13 +50,16 @@ namespace redactly
                         QString plateModelPath = {},
                         std::shared_ptr<PlateDetector> cachedPlateDetector = {},
                         bool gpuAcceleration = false,
-                        int videoCrf = 18);
+                        int videoCrf = 18,
+                        std::shared_ptr<ScrfdFaceDetector> cachedVideoDetector = {});
 
         ~ProcessorWorker() override;
 
         [[nodiscard]] std::shared_ptr<ScrfdFaceDetector> takeDetector();
 
         [[nodiscard]] std::shared_ptr<PlateDetector> takePlateDetector();
+
+        [[nodiscard]] std::shared_ptr<ScrfdFaceDetector> takeVideoDetector();
 
     public slots:
         void process();
@@ -109,6 +112,7 @@ namespace redactly
         std::mutex detectMutex_;
         std::shared_ptr<ScrfdFaceDetector> detector_;
         std::shared_ptr<PlateDetector> plateDetector_;
+        std::shared_ptr<ScrfdFaceDetector> videoDetector_;
     };
 }
 

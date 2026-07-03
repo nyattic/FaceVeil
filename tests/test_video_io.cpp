@@ -229,11 +229,22 @@ int main(int argc, char **argv)
     }
 
     {
+        redactly::VideoFrameReader smallReader;
+        assert(smallReader.open(*tools, samplePath, *info, 160));
+        assert(smallReader.frameWidth() == 160);
+        assert(smallReader.frameHeight() == 120);
+        cv::Mat smallFrame;
+        assert(smallReader.readFrame(smallFrame));
+        assert(smallFrame.cols == 160 && smallFrame.rows == 120);
+        std::puts("downscaled decode: ok");
+    }
+
+    {
         const QString processedPath = tempDir.filePath("processed.mp4");
         std::atomic<bool> cancelled{false};
         qint64 lastPass2Frame = 0;
         const auto result = redactly::processVideo(
-            *tools, samplePath, processedPath, *info, {}, nullptr, nullptr, cancelled,
+            *tools, samplePath, processedPath, *info, {}, {}, cancelled,
             [&](int pass, qint64 frameIndex, qint64)
             {
                 if (pass == 2)
@@ -254,10 +265,43 @@ int main(int argc, char **argv)
     }
 
     {
+        redactly::VideoProcessOptions options;
+        options.analysisLongEdge = 160;
+        options.method = redactly::AnonymizationMethod::Fill;
+        options.paddingRatio = 0.0F;
+        const QString scaledPath = tempDir.filePath("scaled.mp4");
+        std::atomic<bool> cancelled{false};
+        const auto result = redactly::processVideo(
+            *tools, samplePath, scaledPath, *info, options,
+            [](const cv::Mat &frame)
+            {
+                assert(frame.cols == 160 && frame.rows == 120);
+                redactly::FaceDetections detections;
+                detections.push_back({cv::Rect2f(40.0F, 30.0F, 80.0F, 60.0F), 0.9F});
+                return detections;
+            },
+            cancelled);
+        assert(result.status == redactly::VideoProcessStatus::Completed);
+        assert(result.trackCount == 1);
+
+        const auto scaledInfo = redactly::probeVideo(*tools, scaledPath, &probeError);
+        assert(scaledInfo.has_value());
+        redactly::VideoFrameReader outputReader;
+        assert(outputReader.open(*tools, scaledPath, *scaledInfo));
+        cv::Mat outputFrame;
+        assert(outputReader.readFrame(outputFrame));
+        const cv::Scalar inside = cv::mean(outputFrame(cv::Rect(85, 65, 150, 110)));
+        const cv::Scalar outside = cv::mean(outputFrame(cv::Rect(0, 190, 70, 45)));
+        assert(inside[0] + inside[1] + inside[2] < 30.0);
+        assert(outside[0] + outside[1] + outside[2] > 45.0);
+        std::puts("analysis-to-native coordinate scaling: ok");
+    }
+
+    {
         std::atomic<bool> cancelled{true};
         const auto result = redactly::processVideo(
             *tools, samplePath, tempDir.filePath("cancelled.mp4"), *info, {},
-            nullptr, nullptr, cancelled);
+            {}, cancelled);
         assert(result.status == redactly::VideoProcessStatus::Cancelled);
         assert(!QFile::exists(tempDir.filePath("cancelled.mp4")));
         std::puts("video processor cancellation: ok");

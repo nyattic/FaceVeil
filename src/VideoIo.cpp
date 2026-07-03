@@ -462,7 +462,7 @@ namespace redactly
     }
 
     bool VideoFrameReader::open(const FfmpegTools &tools, const QString &path,
-                                const VideoInfo &info)
+                                const VideoInfo &info, const int decodeLongEdge)
     {
         close();
         error_.clear();
@@ -475,12 +475,22 @@ namespace redactly
             return false;
         }
 
+        QString filter = QString("fps=%1/%2").arg(info.fpsNum).arg(info.fpsDen);
+        const int longEdge = std::max(frameWidth_, frameHeight_);
+        if (decodeLongEdge > 0 && decodeLongEdge < longEdge)
+        {
+            const double scale = static_cast<double>(decodeLongEdge) / longEdge;
+            frameWidth_ = std::max(2, static_cast<int>(std::lround(frameWidth_ * scale)));
+            frameHeight_ = std::max(2, static_cast<int>(std::lround(frameHeight_ * scale)));
+            filter += QString(",scale=%1:%2:flags=area").arg(frameWidth_).arg(frameHeight_);
+        }
+
         process_ = std::make_unique<QProcess>();
         process_->start(tools.ffmpegPath,
                         {"-v", "error", "-nostdin",
                          "-i", path,
                          "-map", "0:v:0",
-                         "-vf", QString("fps=%1/%2").arg(info.fpsNum).arg(info.fpsDen),
+                         "-vf", filter,
                          "-f", "rawvideo",
                          "-pix_fmt", "bgr24",
                          "-"});
@@ -491,6 +501,16 @@ namespace redactly
             return false;
         }
         return true;
+    }
+
+    int VideoFrameReader::frameWidth() const
+    {
+        return frameWidth_;
+    }
+
+    int VideoFrameReader::frameHeight() const
+    {
+        return frameHeight_;
     }
 
     bool VideoFrameReader::readFrame(cv::Mat &frame)

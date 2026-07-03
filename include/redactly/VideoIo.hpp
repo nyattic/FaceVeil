@@ -69,9 +69,13 @@ namespace redactly
         VideoFrameReader(const VideoFrameReader &) = delete;
         VideoFrameReader &operator=(const VideoFrameReader &) = delete;
 
-        bool open(const FfmpegTools &tools, const QString &path, const VideoInfo &info);
+        bool open(const FfmpegTools &tools, const QString &path, const VideoInfo &info,
+                  int decodeLongEdge = 0);
         bool readFrame(cv::Mat &frame);
         void close();
+
+        [[nodiscard]] int frameWidth() const;
+        [[nodiscard]] int frameHeight() const;
 
         [[nodiscard]] bool atEnd() const;
         [[nodiscard]] QString errorString() const;

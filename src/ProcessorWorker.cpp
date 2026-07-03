@@ -14,6 +14,7 @@
 
 #include <QCoreApplication>
 #include <QDir>
+#include <QElapsedTimer>
 #include <QImageReader>
 #include <QMetaObject>
 #include <QRectF>
@@ -37,6 +38,7 @@ namespace redactly
     {
         constexpr std::uintmax_t kMaxInputFileBytes = 1ULL << 30;
         constexpr long long kMaxPixelCount = 200LL * 1000LL * 1000LL;
+        constexpr int kVideoDetectionInputSize = 960;
 
         constexpr int kReviewMaxLongEdge = 1600;
 
@@ -261,7 +263,8 @@ namespace redactly
                                      QString plateModelPath,
                                      std::shared_ptr<PlateDetector> cachedPlateDetector,
                                      bool gpuAcceleration,
-                                     int videoCrf)
+                                     int videoCrf,
+                                     std::shared_ptr<ScrfdFaceDetector> cachedVideoDetector)
         : modelPath_(std::move(modelPath)),
           inputs_(std::move(inputs)),
           outputDirectory_(std::move(outputDirectory)),
@@ -282,7 +285,8 @@ namespace redactly
           gpuAcceleration_(gpuAcceleration),
           videoCrf_(videoCrf),
           detector_(std::move(cachedDetector)),
-          plateDetector_(std::move(cachedPlateDetector))
+          plateDetector_(std::move(cachedPlateDetector)),
+          videoDetector_(std::move(cachedVideoDetector))
     {
     }
 
@@ -296,6 +300,11 @@ namespace redactly
     std::shared_ptr<PlateDetector> ProcessorWorker::takePlateDetector()
     {
         return std::move(plateDetector_);
+    }
+
+    std::shared_ptr<ScrfdFaceDetector> ProcessorWorker::takeVideoDetector()
+    {
+        return std::move(videoDetector_);
     }
 
     void ProcessorWorker::process()
@@ -829,30 +838,72 @@ namespace redactly
         options.softEdges = softEdges_;
         options.crf = videoCrf_;
 
+        if (detector_ && !videoDetector_)
+        {
+            emit logMessage(tr("Loading face detection model for video (%1 px)...")
+                                .arg(kVideoDetectionInputSize));
+            videoDetector_ = std::make_shared<ScrfdFaceDetector>(
+                modelPath_.toStdString(), kVideoDetectionInputSize, gpuAcceleration_);
+        }
+
+        const float detectionThreshold =
+                std::min(options.tracker.lowScoreThreshold, scoreThreshold_);
+        const auto detect = [this, detectionThreshold](const cv::Mat &frame)
+        {
+            std::lock_guard lock(detectMutex_);
+            FaceDetections detections;
+            if (videoDetector_)
+            {
+                detections = videoDetector_->detect(frame, detectionThreshold, nmsThreshold_);
+            }
+            if (plateDetector_)
+            {
+                const auto plates =
+                        plateDetector_->detect(frame, detectionThreshold, nmsThreshold_);
+                detections.insert(detections.end(), plates.begin(), plates.end());
+            }
+            return detections;
+        };
+
+        QElapsedTimer passTimer;
+        QElapsedTimer totalTimer;
+        totalTimer.start();
         int lastPass = 0;
         int lastPercent = -1;
         const auto progress = [&](int pass, qint64 frame, qint64 totalFrames)
         {
+            if (pass != lastPass)
+            {
+                passTimer.start();
+                lastPass = pass;
+                lastPercent = -1;
+            }
             const int percent = totalFrames > 0
                                     ? static_cast<int>(std::min<qint64>(100, frame * 100 / totalFrames))
                                     : 0;
-            if (pass == lastPass && percent == lastPercent)
+            if (percent == lastPercent)
             {
                 return;
             }
-            lastPass = pass;
             lastPercent = percent;
-            const QString stage = pass == 1 ? tr("Analyzing %1%").arg(percent)
-                                            : tr("Encoding %1%").arg(percent);
+            QString stage = pass == 1 ? tr("Analyzing %1%").arg(percent)
+                                      : tr("Encoding %1%").arg(percent);
+            const qint64 elapsedMs = passTimer.elapsed();
+            if (frame > 0 && elapsedMs > 2000 && totalFrames > frame)
+            {
+                const qint64 remaining = elapsedMs * (totalFrames - frame) / frame / 1000;
+                stage += QStringLiteral("  ·  ");
+                stage += remaining >= 60
+                             ? tr("%1m %2s left").arg(remaining / 60).arg(remaining % 60)
+                             : tr("%1s left").arg(remaining);
+            }
             emit stageChanged(index, total, stage, fileName);
         };
 
-        std::lock_guard lock(detectMutex_);
         const auto result = processVideo(*tools,
                                          pathToQString(item.sourcePath),
                                          pathToQString(destination),
-                                         *info, options,
-                                         detector_.get(), plateDetector_.get(),
+                                         *info, options, detect,
                                          cancelled_, progress);
         switch (result.status)
         {
@@ -867,6 +918,17 @@ namespace redactly
                 {
                     outcome.logs.push_back(
                         tr("Redacted %n region(s): %1", nullptr, result.trackCount)
+                            .arg(fileName));
+                }
+                if (const double elapsedSeconds = totalTimer.elapsed() / 1000.0;
+                    elapsedSeconds > 0 && info->fps() > 0)
+                {
+                    const double videoSeconds = static_cast<double>(result.frameCount) / info->fps();
+                    outcome.logs.push_back(
+                        tr("Processed %1 frames in %2s (%3× real time): %4")
+                            .arg(result.frameCount)
+                            .arg(elapsedSeconds, 0, 'f', 1)
+                            .arg(videoSeconds / elapsedSeconds, 0, 'f', 1)
                             .arg(fileName));
                 }
                 outcome.anonymized = 1;

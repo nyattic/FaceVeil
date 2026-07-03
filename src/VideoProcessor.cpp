@@ -1,8 +1,5 @@
 #include "redactly/VideoProcessor.hpp"
 
-#include "redactly/PlateDetector.hpp"
-#include "redactly/ScrfdFaceDetector.hpp"
-
 #include <QCoreApplication>
 
 #include <algorithm>
@@ -16,26 +13,22 @@ namespace redactly
             return QCoreApplication::translate("redactly::VideoProcessor", text);
         }
 
-        FaceDetections detectFrame(const cv::Mat &frame,
-                                   ScrfdFaceDetector *faceDetector,
-                                   PlateDetector *plateDetector,
-                                   const VideoProcessOptions &options)
+        void scaleTracksToNative(std::vector<Track> &tracks, float scaleX, float scaleY)
         {
-            const float detectionThreshold =
-                    std::min(options.tracker.lowScoreThreshold, options.scoreThreshold);
-            FaceDetections detections;
-            if (faceDetector != nullptr)
+            if (scaleX == 1.0F && scaleY == 1.0F)
             {
-                detections = faceDetector->detect(frame, detectionThreshold,
-                                                  options.nmsThreshold);
+                return;
             }
-            if (plateDetector != nullptr)
+            for (auto &track: tracks)
             {
-                const auto plates = plateDetector->detect(frame, detectionThreshold,
-                                                          options.nmsThreshold);
-                detections.insert(detections.end(), plates.begin(), plates.end());
+                for (auto &tracked: track.boxes)
+                {
+                    tracked.box.x *= scaleX;
+                    tracked.box.y *= scaleY;
+                    tracked.box.width *= scaleX;
+                    tracked.box.height *= scaleY;
+                }
             }
-            return detections;
         }
     }
 
@@ -44,8 +37,7 @@ namespace redactly
                                     const QString &destinationPath,
                                     const VideoInfo &info,
                                     const VideoProcessOptions &options,
-                                    ScrfdFaceDetector *faceDetector,
-                                    PlateDetector *plateDetector,
+                                    const VideoDetectFn &detect,
                                     const std::atomic<bool> &cancelled,
                                     const VideoProgressFn &progress)
     {
@@ -57,13 +49,17 @@ namespace redactly
             frameDetections.reserve(static_cast<std::size_t>(info.estimatedFrameCount));
         }
 
+        float scaleX = 1.0F;
+        float scaleY = 1.0F;
         {
             VideoFrameReader reader;
-            if (!reader.open(tools, sourcePath, info))
+            if (!reader.open(tools, sourcePath, info, options.analysisLongEdge))
             {
                 result.error = reader.errorString();
                 return result;
             }
+            scaleX = static_cast<float>(info.displayWidth()) / reader.frameWidth();
+            scaleY = static_cast<float>(info.displayHeight()) / reader.frameHeight();
 
             cv::Mat frame;
             while (reader.readFrame(frame))
@@ -73,8 +69,7 @@ namespace redactly
                     result.status = VideoProcessStatus::Cancelled;
                     return result;
                 }
-                frameDetections.push_back(
-                    detectFrame(frame, faceDetector, plateDetector, options));
+                frameDetections.push_back(detect ? detect(frame) : FaceDetections{});
                 if (progress)
                 {
                     progress(1, static_cast<qint64>(frameDetections.size()),
@@ -101,6 +96,7 @@ namespace redactly
         trackerConfig.highScoreThreshold = options.scoreThreshold;
         auto tracks = buildBidirectionalTracks(frameDetections, trackerConfig);
         postProcessTracks(tracks, options.postProcess, static_cast<int>(frameCount));
+        scaleTracksToNative(tracks, scaleX, scaleY);
         result.trackCount = static_cast<int>(tracks.size());
         frameDetections.clear();
         frameDetections.shrink_to_fit();

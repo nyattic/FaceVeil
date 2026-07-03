@@ -54,6 +54,7 @@
 #include <QLibraryInfo>
 #include <QPainter>
 #include <QPaintEvent>
+#include <QProcess>
 #include <QProgressDialog>
 #include <QScreen>
 #include <QStyle>
@@ -104,6 +105,35 @@ namespace redactly
             auto *label = new QLabel(parent);
             label->setProperty("role", "fieldLabel");
             return label;
+        }
+
+        QIcon videoThumbnailIcon(const QString &path)
+        {
+            const auto tools = locateFfmpegTools();
+            if (!tools)
+            {
+                return {};
+            }
+            QProcess process;
+            process.start(tools->ffmpegPath,
+                          {"-v", "error", "-ss", "0", "-i", path,
+                           "-frames:v", "1", "-vf", "scale=80:-2",
+                           "-f", "image2pipe", "-c:v", "png", "-"});
+            if (!process.waitForStarted(3000) || !process.waitForFinished(3000))
+            {
+                process.kill();
+                return {};
+            }
+            if (process.exitStatus() != QProcess::NormalExit || process.exitCode() != 0)
+            {
+                return {};
+            }
+            QImage image;
+            if (!image.loadFromData(process.readAllStandardOutput(), "PNG") || image.isNull())
+            {
+                return {};
+            }
+            return QIcon(QPixmap::fromImage(image));
         }
 
         QFrame *makeCard(QWidget *parent)
@@ -1032,6 +1062,7 @@ namespace redactly
         statusLabel_->setText(tr("Starting…"));
 
         auto detectorForRun = (cachedDetectorModelPath_ == modelPath) ? cachedDetector_ : nullptr;
+        auto videoDetectorForRun = (cachedDetectorModelPath_ == modelPath) ? cachedVideoDetector_ : nullptr;
         auto plateForRun = (!plateModelPath.isEmpty() && cachedPlateModelPath_ == plateModelPath)
                                ? cachedPlateDetector_
                                : nullptr;
@@ -1057,7 +1088,8 @@ namespace redactly
                                       plateModelPath,
                                       std::move(plateForRun),
                                       gpuAcceleration_,
-                                      crfForQuality(static_cast<VideoQuality>(videoQuality_)));
+                                      crfForQuality(static_cast<VideoQuality>(videoQuality_)),
+                                      std::move(videoDetectorForRun));
 
         worker_->moveToThread(workerThread_);
         connect(workerThread_, &QThread::started, worker_, &ProcessorWorker::process);
@@ -1129,6 +1161,12 @@ namespace redactly
             {
                 cachedDetector_ = std::move(detector);
                 cachedDetectorModelPath_ = selectedModelPath();
+            }
+
+            auto videoDetector = worker_->takeVideoDetector();
+            if (videoDetector)
+            {
+                cachedVideoDetector_ = std::move(videoDetector);
             }
 
             auto plate = worker_->takePlateDetector();
@@ -1372,6 +1410,7 @@ namespace redactly
             {
                 gpuAcceleration_ = enabled;
                 cachedDetector_.reset();
+                cachedVideoDetector_.reset();
                 cachedDetectorModelPath_.clear();
                 cachedPlateDetector_.reset();
                 cachedPlateModelPath_.clear();
@@ -1443,6 +1482,13 @@ namespace redactly
         if (info.isDir())
         {
             item->setIcon(style()->standardIcon(QStyle::SP_DirIcon));
+        }
+        else if (isSupportedVideo(pathFromQString(path)))
+        {
+            const QIcon thumbnail = videoThumbnailIcon(path);
+            item->setIcon(thumbnail.isNull()
+                              ? style()->standardIcon(QStyle::SP_FileIcon)
+                              : thumbnail);
         }
         else
         {
