@@ -627,14 +627,18 @@ namespace redactly
             "-s", QString("%1x%2").arg(frameWidth_).arg(frameHeight_),
             "-framerate", QString("%1/%2").arg(info.fpsNum).arg(info.fpsDen),
             "-i", "-",
-            "-i", audioSource,
-            "-map", "0:v:0",
-            "-map", "1:a:0?",
-            "-c:v", "libx264",
-            "-preset", "medium",
-            "-crf", QString::number(crf),
-            "-pix_fmt", "yuv420p",
         };
+        if (info.hasAudio && info.durationSeconds > 0)
+        {
+            arguments << "-t" << QString::number(info.durationSeconds, 'f', 3);
+        }
+        arguments << "-i" << audioSource
+                  << "-map" << "0:v:0"
+                  << "-map" << "1:a:0?"
+                  << "-c:v" << "libx264"
+                  << "-preset" << "medium"
+                  << "-crf" << QString::number(crf)
+                  << "-pix_fmt" << "yuv420p";
         if ((frameWidth_ % 2) != 0 || (frameHeight_ % 2) != 0)
         {
             arguments << "-vf"
@@ -656,7 +660,6 @@ namespace redactly
         arguments << "-map_metadata" << "-1"
                   << "-map_chapters" << "-1"
                   << "-movflags" << "+faststart"
-                  << "-shortest"
                   << "-f" << "mp4"
                   << tempPath_;
 
