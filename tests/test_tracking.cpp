@@ -164,6 +164,27 @@ namespace
         }
     }
 
+    void testSmoothingDoesNotInflateMovingBoxes()
+    {
+        const auto sequence = movingObjectSequence(30, 0.0F, 12.0F);
+        auto tracks = redactly::buildBidirectionalTracks(sequence);
+        redactly::postProcessTracks(tracks, {}, 30);
+        assert(tracks.size() == 1);
+
+        for (int frame = 0; frame < 30; ++frame)
+        {
+            const auto *processed = tracks[0].boxAtFrame(frame);
+            assert(processed != nullptr);
+            if (processed->interpolated)
+            {
+                continue;
+            }
+            const auto &detected = sequence[frame][0].box;
+            assert(contains(processed->box, detected));
+            assert(processed->box.area() <= detected.area() * 1.26F);
+        }
+    }
+
     void testExtendTrackEndsClampsToVideoBounds()
     {
         auto sequence = movingObjectSequence(12, 50.0F, 5.0F);
@@ -213,6 +234,7 @@ int main()
     testBidirectionalMergeProducesSingleTrack();
     testBackwardPassRecoversLowConfidenceStart();
     testSmoothingNeverUncoversDetections();
+    testSmoothingDoesNotInflateMovingBoxes();
     testExtendTrackEndsClampsToVideoBounds();
     testRegionsForFrameCollectsAllTracks();
     std::puts("tracking tests passed");
