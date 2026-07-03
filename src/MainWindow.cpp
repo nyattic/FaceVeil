@@ -750,7 +750,7 @@ namespace redactly
         populateBundledModels();
         loadSettings();
         updateSettingsIcon();
-        appendLog(tr("Ready. Drop images or folders to begin."));
+        appendLog(tr("Ready. Drop images, videos, or folders to begin."));
 
 #if QT_VERSION >= QT_VERSION_CHECK(6, 5, 0)
         connect(qApp->styleHints(), &QStyleHints::colorSchemeChanged, this, [this](Qt::ColorScheme)

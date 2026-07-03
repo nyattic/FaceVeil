@@ -121,7 +121,24 @@ namespace redactly
                     }
                 }
             }
-            return {QStandardPaths::findExecutable(exe), false};
+
+            QString found = QStandardPaths::findExecutable(exe);
+            if (found.isEmpty())
+            {
+#if defined(Q_OS_MACOS)
+                const QStringList fallbackDirs = {
+                    "/opt/homebrew/bin", "/usr/local/bin", "/opt/local/bin"};
+#elif defined(Q_OS_UNIX)
+                const QStringList fallbackDirs = {"/usr/local/bin", "/usr/bin"};
+#else
+                const QStringList fallbackDirs;
+#endif
+                if (!fallbackDirs.isEmpty())
+                {
+                    found = QStandardPaths::findExecutable(exe, fallbackDirs);
+                }
+            }
+            return {found, false};
         }
 
         QString probeVersionLine(const QString &ffmpegPath)
@@ -199,23 +216,15 @@ namespace redactly
     {
         static std::mutex cacheMutex;
         static std::optional<FfmpegTools> cached;
-        static QString cachedError;
-        static bool attempted = false;
 
         std::lock_guard lock(cacheMutex);
-        if (attempted)
+        if (cached)
         {
-            if (!cached && error)
-            {
-                *error = cachedError;
-            }
             return cached;
         }
-        attempted = true;
 
         const auto fail = [&](const QString &message) -> std::optional<FfmpegTools>
         {
-            cachedError = message;
             if (error)
             {
                 *error = message;

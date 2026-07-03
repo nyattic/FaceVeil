@@ -449,8 +449,8 @@ Rounded = elliptical mask that follows the face and leaves corners untouched. De
     </message>
     <message>
         <location filename="../src/MainWindow.cpp" line="891"/>
-        <source>Ready. Drop images or folders to begin.</source>
-        <translation>준비됐습니다. 이미지나 폴더를 끌어놓아 시작하세요.</translation>
+        <source>Ready. Drop images, videos, or folders to begin.</source>
+        <translation>준비됐습니다. 이미지, 동영상, 폴더를 끌어놓아 시작하세요.</translation>
     </message>
     <message>
         <location filename="../src/MainWindow.cpp" line="963"/>
