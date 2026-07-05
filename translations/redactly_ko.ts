@@ -853,6 +853,10 @@ Rounded = elliptical mask that follows the face and leaves corners untouched. De
         <source>Processed %1 frames in %2s (%3× real time): %4</source>
         <translation>프레임 %1개를 %2초에 처리 (실시간의 %3배): %4</translation>
     </message>
+    <message>
+        <source>Video encoder: %1</source>
+        <translation>비디오 인코더: %1</translation>
+    </message>
 </context>
 <context>
     <name>redactly::ReviewDialog</name>
@@ -991,8 +995,8 @@ Continue?</source>
         <translation>GPU 가속 사용</translation>
     </message>
     <message>
-        <source>Runs detection models on the GPU when available. Applies from the next run.</source>
-        <translation>가능한 경우 탐지 모델을 GPU에서 실행합니다. 다음 실행부터 적용됩니다.</translation>
+        <source>Runs detection models and video encoding on the GPU when available. Applies from the next run.</source>
+        <translation>가능한 경우 탐지 모델과 비디오 인코딩을 GPU에서 실행합니다. 다음 실행부터 적용됩니다.</translation>
     </message>
     <message>
         <source>Video quality</source>

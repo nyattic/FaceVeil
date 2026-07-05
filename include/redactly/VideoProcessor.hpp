@@ -23,6 +23,7 @@ namespace redactly
         bool softEdges = false;
         int crf = 18;
         int analysisLongEdge = 960;
+        bool hardwareEncoder = true;
         TrackerConfig tracker;
         TrackPostProcessConfig postProcess;
     };
@@ -40,6 +41,7 @@ namespace redactly
         QString error;
         qint64 frameCount = 0;
         int trackCount = 0;
+        QString encoderName;
     };
 
     using VideoProgressFn = std::function<void(int pass, qint64 frame, qint64 totalEstimate)>;

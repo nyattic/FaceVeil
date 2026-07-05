@@ -7,6 +7,7 @@
 #include <QDir>
 #include <QFile>
 #include <QFileInfo>
+#include <QHash>
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
@@ -209,6 +210,91 @@ namespace redactly
                 return lines.mid(std::max(0, static_cast<int>(lines.size()) - 3)).join(' ').trimmed();
             }
             return process.errorString();
+        }
+
+        QStringList hardwareEncoderCandidates()
+        {
+#if defined(_WIN32)
+            return {QStringLiteral("h264_nvenc"), QStringLiteral("h264_amf"),
+                    QStringLiteral("h264_qsv")};
+#else
+            return {};
+#endif
+        }
+
+        QStringList videoEncoderArgs(const QString &encoder, const int crf)
+        {
+            if (encoder == QLatin1String("h264_nvenc"))
+            {
+                return {"-c:v", "h264_nvenc", "-preset", "p6", "-rc", "vbr",
+                        "-cq", QString::number(crf), "-b:v", "0"};
+            }
+            if (encoder == QLatin1String("h264_amf"))
+            {
+                return {"-c:v", "h264_amf", "-quality", "quality", "-rc", "qvbr",
+                        "-qvbr_quality_level", QString::number(crf)};
+            }
+            if (encoder == QLatin1String("h264_qsv"))
+            {
+                return {"-c:v", "h264_qsv", "-preset", "slow",
+                        "-global_quality", QString::number(crf)};
+            }
+            return {"-c:v", "libx264", "-preset", "medium",
+                    "-crf", QString::number(crf)};
+        }
+
+        bool encoderWorks(const FfmpegTools &tools, const QString &encoder,
+                          const int width, const int height)
+        {
+            QStringList arguments = {
+                "-v", "error", "-nostdin",
+                "-f", "lavfi",
+                "-i", QString("color=black:size=%1x%2:rate=30").arg(width).arg(height),
+                "-frames:v", "3",
+                "-pix_fmt", "yuv420p",
+            };
+            arguments << videoEncoderArgs(encoder, crfForQuality(VideoQuality::Balanced))
+                      << "-f" << "null" << "-";
+
+            QProcess probe;
+            probe.start(tools.ffmpegPath, arguments);
+            if (!probe.waitForStarted(kProcessStartTimeoutMs))
+            {
+                return false;
+            }
+            if (!probe.waitForFinished(kProcessIoTimeoutMs))
+            {
+                probe.kill();
+                probe.waitForFinished(kProcessStartTimeoutMs);
+                return false;
+            }
+            return probe.exitStatus() == QProcess::NormalExit && probe.exitCode() == 0;
+        }
+
+        QString selectVideoEncoder(const FfmpegTools &tools, const int width, const int height)
+        {
+            static std::mutex cacheMutex;
+            static QHash<QString, bool> cache;
+
+            std::lock_guard lock(cacheMutex);
+            for (const auto &encoder : hardwareEncoderCandidates())
+            {
+                const QString key =
+                        QString("%1:%2x%3").arg(encoder).arg(width).arg(height);
+                auto it = cache.find(key);
+                if (it == cache.end())
+                {
+                    it = cache.insert(key, encoderWorks(tools, encoder, width, height));
+                    spdlog::info("Hardware video encoder {} {} at {}x{}",
+                                 encoder.toStdString(),
+                                 it.value() ? "available" : "unavailable", width, height);
+                }
+                if (it.value())
+                {
+                    return encoder;
+                }
+            }
+            return QStringLiteral("libx264");
         }
     }
 
@@ -602,7 +688,8 @@ namespace redactly
                                 const QString &destination,
                                 const QString &audioSource,
                                 const VideoInfo &info,
-                                const int crf)
+                                const int crf,
+                                const bool hardwareEncoder)
     {
         abort();
         error_.clear();
@@ -613,6 +700,15 @@ namespace redactly
             error_ = trVideo("Invalid video dimensions.");
             return false;
         }
+
+        encoderName_ = QStringLiteral("libx264");
+        if (hardwareEncoder)
+        {
+            encoderName_ = selectVideoEncoder(tools,
+                                              frameWidth_ - (frameWidth_ % 2),
+                                              frameHeight_ - (frameHeight_ % 2));
+        }
+        spdlog::info("Video encoder: {}", encoderName_.toStdString());
 
         destinationPath_ = destination;
         tempPath_ = uniqueVideoTempPath(destination);
@@ -635,9 +731,7 @@ namespace redactly
         arguments << "-i" << audioSource
                   << "-map" << "0:v:0"
                   << "-map" << "1:a:0?"
-                  << "-c:v" << "libx264"
-                  << "-preset" << "medium"
-                  << "-crf" << QString::number(crf)
+                  << videoEncoderArgs(encoderName_, crf)
                   << "-pix_fmt" << "yuv420p";
         if ((frameWidth_ % 2) != 0 || (frameHeight_ % 2) != 0)
         {
@@ -782,5 +876,10 @@ namespace redactly
     QString VideoFrameWriter::errorString() const
     {
         return error_;
+    }
+
+    QString VideoFrameWriter::encoderName() const
+    {
+        return encoderName_;
     }
 }

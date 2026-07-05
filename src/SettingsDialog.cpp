@@ -116,8 +116,8 @@ namespace redactly
         logCheck_->setToolTip(tr("The log may include the names of files you process. "
                                  "Stored on this device only. Takes effect on the next launch."));
         gpuCheck_->setText(tr("Use GPU acceleration"));
-        gpuCheck_->setToolTip(tr("Runs detection models on the GPU when available. "
-                                 "Applies from the next run."));
+        gpuCheck_->setToolTip(tr("Runs detection models and video encoding on the GPU "
+                                 "when available. Applies from the next run."));
         videoQualityLabel_->setText(tr("Video quality"));
         videoQualityCombo_->setItemText(0, tr("High (near-original)"));
         videoQualityCombo_->setItemText(1, tr("Balanced"));

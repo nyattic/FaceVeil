@@ -108,11 +108,13 @@ namespace redactly
             return result;
         }
         VideoFrameWriter writer;
-        if (!writer.open(tools, destinationPath, sourcePath, info, options.crf))
+        if (!writer.open(tools, destinationPath, sourcePath, info, options.crf,
+                         options.hardwareEncoder))
         {
             result.error = writer.errorString();
             return result;
         }
+        result.encoderName = writer.encoderName();
 
         qint64 frameIndex = 0;
         cv::Mat frame;

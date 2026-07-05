@@ -101,12 +101,14 @@ namespace redactly
                   const QString &destination,
                   const QString &audioSource,
                   const VideoInfo &info,
-                  int crf);
+                  int crf,
+                  bool hardwareEncoder = true);
         bool writeFrame(const cv::Mat &frame);
         bool finish();
         void abort();
 
         [[nodiscard]] QString errorString() const;
+        [[nodiscard]] QString encoderName() const;
 
     private:
         std::unique_ptr<QProcess> process_;
@@ -115,5 +117,6 @@ namespace redactly
         int frameWidth_ = 0;
         int frameHeight_ = 0;
         QString error_;
+        QString encoderName_;
     };
 }

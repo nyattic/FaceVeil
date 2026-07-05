@@ -39,6 +39,15 @@ the face models run roughly 9–13× faster, which is also what makes per-frame
 video analysis practical. Bundling DirectML grows the Windows download by
 roughly 20 MB.
 
+Video encoding on Windows also moves to the GPU when one is available. The
+encoder is picked automatically per machine — NVENC on NVIDIA, AMF on AMD,
+Quick Sync on Intel — by test-encoding a few frames before each video, and
+falls back to CPU x264 when no hardware encoder works or when GPU
+acceleration is switched off in Settings. The log names the encoder used
+for each video. Hardware encoders trade a little compression efficiency
+for speed, so files may come out somewhat larger than CPU-encoded ones at
+the same quality preset.
+
 **Faster photo batches.** When review is off, images are processed in
 parallel (up to four at a time), preserving the original log and progress
 order.

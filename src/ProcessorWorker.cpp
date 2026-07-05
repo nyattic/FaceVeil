@@ -837,6 +837,7 @@ namespace redactly
         options.shape = shape_;
         options.softEdges = softEdges_;
         options.crf = videoCrf_;
+        options.hardwareEncoder = gpuAcceleration_;
 
         if (detector_ && !videoDetector_)
         {
@@ -930,6 +931,11 @@ namespace redactly
                             .arg(elapsedSeconds, 0, 'f', 1)
                             .arg(videoSeconds / elapsedSeconds, 0, 'f', 1)
                             .arg(fileName));
+                }
+                if (!result.encoderName.isEmpty())
+                {
+                    outcome.logs.push_back(
+                        tr("Video encoder: %1").arg(result.encoderName));
                 }
                 outcome.anonymized = 1;
                 break;
