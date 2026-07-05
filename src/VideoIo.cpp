@@ -683,7 +683,7 @@ namespace redactly
                 received += chunk;
                 continue;
             }
-            if (exhausted())
+            if (chunk < 0 || exhausted())
             {
                 atEnd_ = true;
                 process_->waitForFinished(kProcessStartTimeoutMs);
@@ -697,12 +697,6 @@ namespace redactly
                 {
                     error_ = trVideo("Decoding failed: %1").arg(processErrorDetail(*process_));
                 }
-                return false;
-            }
-            if (chunk < 0)
-            {
-                error_ = trVideo("Decoding failed: %1").arg(processErrorDetail(*process_));
-                atEnd_ = true;
                 return false;
             }
             if (!device->waitForReadyRead(kProcessIoTimeoutMs) && !exhausted())
