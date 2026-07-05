@@ -2,6 +2,8 @@
 
 #include <QCoreApplication>
 
+#include <spdlog/spdlog.h>
+
 #include <algorithm>
 
 namespace redactly
@@ -51,6 +53,7 @@ namespace redactly
 
         float scaleX = 1.0F;
         float scaleY = 1.0F;
+        SceneCutDetector cutDetector;
         {
             VideoFrameReader reader;
             if (!reader.open(tools, sourcePath, info, options.analysisLongEdge))
@@ -69,6 +72,7 @@ namespace redactly
                     result.status = VideoProcessStatus::Cancelled;
                     return result;
                 }
+                cutDetector.push(frame);
                 frameDetections.push_back(detect ? detect(frame) : FaceDetections{});
                 if (progress)
                 {
@@ -92,10 +96,13 @@ namespace redactly
             return result;
         }
 
+        const SceneCuts sceneCuts = cutDetector.finish();
+        spdlog::info("Video scene cuts detected: {}", sceneCuts.frames().size());
+
         TrackerConfig trackerConfig = options.tracker;
         trackerConfig.highScoreThreshold = options.scoreThreshold;
-        auto tracks = buildBidirectionalTracks(frameDetections, trackerConfig);
-        postProcessTracks(tracks, options.postProcess, static_cast<int>(frameCount));
+        auto tracks = buildBidirectionalTracks(frameDetections, trackerConfig, 0.5F, sceneCuts);
+        postProcessTracks(tracks, options.postProcess, static_cast<int>(frameCount), sceneCuts);
         scaleTracksToNative(tracks, scaleX, scaleY);
         result.trackCount = static_cast<int>(tracks.size());
         frameDetections.clear();

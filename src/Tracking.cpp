@@ -113,8 +113,9 @@ namespace redactly
         return boxWithCenter(last.box, center);
     }
 
-    ByteTracker::ByteTracker(TrackerConfig config)
+    ByteTracker::ByteTracker(TrackerConfig config, SceneCuts cuts)
         : config_(config)
+        , cuts_(std::move(cuts))
     {
     }
 
@@ -134,6 +135,15 @@ namespace redactly
 
     void ByteTracker::update(int frame, const FaceDetections &detections)
     {
+        if (cuts_.isCut(frame))
+        {
+            for (auto &active: active_)
+            {
+                finished_.push_back(std::move(active.track));
+            }
+            active_.clear();
+        }
+
         std::erase_if(active_, [&](ActiveTrack &active)
         {
             if (frame - active.lastFrame > config_.maxFramesLost)
@@ -218,9 +228,10 @@ namespace redactly
     }
 
     std::vector<Track> buildTracks(const std::vector<FaceDetections> &frameDetections,
-                                   const TrackerConfig &config)
+                                   const TrackerConfig &config,
+                                   const SceneCuts &cuts)
     {
-        ByteTracker tracker(config);
+        ByteTracker tracker(config, cuts);
         for (size_t frame = 0; frame < frameDetections.size(); ++frame)
         {
             tracker.update(static_cast<int>(frame), frameDetections[frame]);
@@ -230,13 +241,14 @@ namespace redactly
 
     std::vector<Track> buildBidirectionalTracks(const std::vector<FaceDetections> &frameDetections,
                                                 const TrackerConfig &config,
-                                                float mergeIouThreshold)
+                                                float mergeIouThreshold,
+                                                const SceneCuts &cuts)
     {
-        auto forward = buildTracks(frameDetections, config);
+        auto forward = buildTracks(frameDetections, config, cuts);
 
         const int frameCount = static_cast<int>(frameDetections.size());
         std::vector<FaceDetections> reversed(frameDetections.rbegin(), frameDetections.rend());
-        auto backward = buildTracks(reversed, config);
+        auto backward = buildTracks(reversed, config, cuts.reversed(frameCount));
         for (auto &track: backward)
         {
             for (auto &box: track.boxes)
@@ -302,7 +314,7 @@ namespace redactly
         return forward;
     }
 
-    void interpolateGaps(Track &track, int maxGap)
+    void interpolateGaps(Track &track, int maxGap, const SceneCuts &cuts)
     {
         if (track.boxes.size() < 2 || maxGap < 1)
         {
@@ -318,7 +330,7 @@ namespace redactly
             filled.push_back(current);
 
             const int gap = next.frame - current.frame - 1;
-            if (gap < 1 || gap > maxGap)
+            if (gap < 1 || gap > maxGap || cuts.spansCut(current.frame, next.frame))
             {
                 continue;
             }
@@ -387,7 +399,7 @@ namespace redactly
         }
     }
 
-    void extendTrackEnds(Track &track, int frames, int frameCount)
+    void extendTrackEnds(Track &track, int frames, int frameCount, const SceneCuts &cuts)
     {
         if (track.boxes.empty() || frames < 1 || frameCount < 1)
         {
@@ -398,6 +410,10 @@ namespace redactly
         const auto &first = track.boxes.front();
         for (int frame = std::max(0, first.frame - frames); frame < first.frame; ++frame)
         {
+            if (cuts.spansCut(frame, first.frame))
+            {
+                continue;
+            }
             prefix.push_back({frame, first.box, first.score, true});
         }
 
@@ -406,6 +422,10 @@ namespace redactly
         const int lastAllowed = frameCount - 1;
         for (int frame = last.frame + 1; frame <= std::min(lastAllowed, last.frame + frames); ++frame)
         {
+            if (cuts.spansCut(last.frame, frame))
+            {
+                break;
+            }
             suffix.push_back({frame, last.box, last.score, true});
         }
 
@@ -413,13 +433,14 @@ namespace redactly
         track.boxes.insert(track.boxes.end(), suffix.begin(), suffix.end());
     }
 
-    void postProcessTracks(std::vector<Track> &tracks, const TrackPostProcessConfig &config, int frameCount)
+    void postProcessTracks(std::vector<Track> &tracks, const TrackPostProcessConfig &config,
+                           int frameCount, const SceneCuts &cuts)
     {
         for (auto &track: tracks)
         {
-            interpolateGaps(track, config.maxInterpolationGap);
+            interpolateGaps(track, config.maxInterpolationGap, cuts);
             smoothTrack(track, config.smoothingRadius);
-            extendTrackEnds(track, config.extensionFrames, frameCount);
+            extendTrackEnds(track, config.extensionFrames, frameCount, cuts);
         }
     }
 

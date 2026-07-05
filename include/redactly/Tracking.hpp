@@ -1,6 +1,7 @@
 #pragma once
 
 #include "redactly/FaceDetection.hpp"
+#include "redactly/SceneCut.hpp"
 
 #include <opencv2/core.hpp>
 
@@ -38,7 +39,7 @@ namespace redactly
     class ByteTracker
     {
     public:
-        explicit ByteTracker(TrackerConfig config = {});
+        explicit ByteTracker(TrackerConfig config = {}, SceneCuts cuts = {});
 
         void update(int frame, const FaceDetections &detections);
 
@@ -57,6 +58,7 @@ namespace redactly
         void extendTrack(ActiveTrack &active, int frame, const FaceDetection &detection);
 
         TrackerConfig config_;
+        SceneCuts cuts_;
         std::vector<ActiveTrack> active_;
         std::vector<Track> finished_;
         int nextId_ = 1;
@@ -70,20 +72,23 @@ namespace redactly
     };
 
     [[nodiscard]] std::vector<Track> buildTracks(const std::vector<FaceDetections> &frameDetections,
-                                                 const TrackerConfig &config = {});
+                                                 const TrackerConfig &config = {},
+                                                 const SceneCuts &cuts = {});
 
     [[nodiscard]] std::vector<Track> buildBidirectionalTracks(
         const std::vector<FaceDetections> &frameDetections,
         const TrackerConfig &config = {},
-        float mergeIouThreshold = 0.5F);
+        float mergeIouThreshold = 0.5F,
+        const SceneCuts &cuts = {});
 
-    void interpolateGaps(Track &track, int maxGap);
+    void interpolateGaps(Track &track, int maxGap, const SceneCuts &cuts = {});
 
     void smoothTrack(Track &track, int radius);
 
-    void extendTrackEnds(Track &track, int frames, int frameCount);
+    void extendTrackEnds(Track &track, int frames, int frameCount, const SceneCuts &cuts = {});
 
-    void postProcessTracks(std::vector<Track> &tracks, const TrackPostProcessConfig &config, int frameCount);
+    void postProcessTracks(std::vector<Track> &tracks, const TrackPostProcessConfig &config,
+                           int frameCount, const SceneCuts &cuts = {});
 
     [[nodiscard]] std::vector<cv::Rect2f> trackRegionsForFrame(const std::vector<Track> &tracks, int frame);
 }

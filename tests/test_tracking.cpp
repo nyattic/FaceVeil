@@ -1,3 +1,4 @@
+#include "redactly/SceneCut.hpp"
 #include "redactly/Tracking.hpp"
 
 #include <opencv2/core.hpp>
@@ -222,6 +223,161 @@ namespace
         assert(redactly::trackRegionsForFrame(tracks, 5).size() == 2);
         assert(redactly::trackRegionsForFrame(tracks, 42).empty());
     }
+
+    void testSceneCutsContainer()
+    {
+        const redactly::SceneCuts cuts({15, 5, 5, 0, -3});
+        assert(cuts.frames() == std::vector<int>({5, 15}));
+        assert(cuts.isCut(5));
+        assert(!cuts.isCut(6));
+        assert(cuts.spansCut(4, 5));
+        assert(cuts.spansCut(0, 19));
+        assert(cuts.spansCut(14, 16));
+        assert(!cuts.spansCut(5, 14));
+        assert(!cuts.spansCut(15, 19));
+        assert(!redactly::SceneCuts{}.spansCut(0, 1000));
+
+        const auto reversed = cuts.reversed(20);
+        assert(reversed.frames() == std::vector<int>({5, 15}));
+        const auto asymmetric = redactly::SceneCuts({7}).reversed(20);
+        assert(asymmetric.frames() == std::vector<int>({13}));
+    }
+
+    void testTrackerSplitsTracksAtSceneCut()
+    {
+        const auto sequence = movingObjectSequence(20, 50.0F, 0.0F);
+
+        const auto unbroken = redactly::buildTracks(sequence);
+        assert(unbroken.size() == 1);
+
+        const auto split = redactly::buildTracks(sequence, {}, redactly::SceneCuts({10}));
+        assert(split.size() == 2);
+        for (const auto &track: split)
+        {
+            assert(track.firstFrame() >= 10 || track.lastFrame() < 10);
+        }
+    }
+
+    void testNoInterpolationAcrossSceneCut()
+    {
+        redactly::Track track;
+        track.id = 1;
+        track.boxes.push_back({5, cv::Rect2f(50.0F, 50.0F, 40.0F, 40.0F), 0.9F, false});
+        track.boxes.push_back({15, cv::Rect2f(50.0F, 50.0F, 40.0F, 40.0F), 0.9F, false});
+
+        auto gated = track;
+        redactly::interpolateGaps(gated, 30, redactly::SceneCuts({10}));
+        assert(gated.boxes.size() == 2);
+
+        redactly::interpolateGaps(track, 30);
+        assert(track.boxes.size() == 11);
+    }
+
+    void testExtendTrackEndsStopsAtSceneCut()
+    {
+        redactly::Track track;
+        track.id = 1;
+        for (int frame = 10; frame <= 15; ++frame)
+        {
+            track.boxes.push_back({frame, cv::Rect2f(50.0F, 50.0F, 40.0F, 40.0F), 0.9F, false});
+        }
+
+        redactly::extendTrackEnds(track, 5, 30, redactly::SceneCuts({10, 16}));
+        assert(track.firstFrame() == 10);
+        assert(track.lastFrame() == 15);
+    }
+
+    void testBidirectionalTracksRespectSceneCuts()
+    {
+        const auto sequence = movingObjectSequence(20, 50.0F, 5.0F);
+        const auto tracks =
+                redactly::buildBidirectionalTracks(sequence, {}, 0.5F, redactly::SceneCuts({10}));
+        assert(tracks.size() == 2);
+        for (const auto &track: tracks)
+        {
+            assert(track.firstFrame() >= 10 || track.lastFrame() < 10);
+        }
+        for (int frame = 0; frame < 20; ++frame)
+        {
+            assert(redactly::trackRegionsForFrame(tracks, frame).size() == 1);
+        }
+    }
+
+    cv::Mat gradientFrame(bool horizontal, int width = 480, int height = 270)
+    {
+        cv::Mat frame(height, width, CV_8UC1);
+        for (int y = 0; y < height; ++y)
+        {
+            for (int x = 0; x < width; ++x)
+            {
+                const int value = horizontal ? x * 255 / (width - 1) : y * 255 / (height - 1);
+                frame.at<unsigned char>(y, x) = static_cast<unsigned char>(value);
+            }
+        }
+        return frame;
+    }
+
+    void testSceneCutDetectorFindsHardCut()
+    {
+        const auto sceneA = gradientFrame(true);
+        const auto sceneB = gradientFrame(false);
+
+        redactly::SceneCutDetector detector;
+        for (int frame = 0; frame < 10; ++frame)
+        {
+            detector.push(sceneA);
+        }
+        for (int frame = 0; frame < 5; ++frame)
+        {
+            detector.push(sceneB);
+        }
+        const auto cuts = detector.finish();
+        assert(cuts.frames() == std::vector<int>({10}));
+    }
+
+    void testSceneCutDetectorIgnoresFlash()
+    {
+        const auto scene = gradientFrame(true);
+        const cv::Mat flash(270, 480, CV_8UC1, cv::Scalar(255));
+
+        redactly::SceneCutDetector detector;
+        for (int frame = 0; frame < 10; ++frame)
+        {
+            detector.push(scene);
+        }
+        detector.push(flash);
+        for (int frame = 0; frame < 10; ++frame)
+        {
+            detector.push(scene);
+        }
+        assert(detector.finish().empty());
+    }
+
+    void testSceneCutDetectorIgnoresStaticScene()
+    {
+        const auto scene = gradientFrame(true);
+        redactly::SceneCutDetector detector;
+        for (int frame = 0; frame < 30; ++frame)
+        {
+            detector.push(scene);
+        }
+        assert(detector.finish().empty());
+    }
+
+    void testSceneCutDetectorCommitsTrailingCandidate()
+    {
+        const auto sceneA = gradientFrame(true);
+        const auto sceneB = gradientFrame(false);
+
+        redactly::SceneCutDetector detector;
+        for (int frame = 0; frame < 5; ++frame)
+        {
+            detector.push(sceneA);
+        }
+        detector.push(sceneB);
+        const auto cuts = detector.finish();
+        assert(cuts.frames() == std::vector<int>({5}));
+    }
 }
 
 int main()
@@ -237,6 +393,15 @@ int main()
     testSmoothingDoesNotInflateMovingBoxes();
     testExtendTrackEndsClampsToVideoBounds();
     testRegionsForFrameCollectsAllTracks();
+    testSceneCutsContainer();
+    testTrackerSplitsTracksAtSceneCut();
+    testNoInterpolationAcrossSceneCut();
+    testExtendTrackEndsStopsAtSceneCut();
+    testBidirectionalTracksRespectSceneCuts();
+    testSceneCutDetectorFindsHardCut();
+    testSceneCutDetectorIgnoresFlash();
+    testSceneCutDetectorIgnoresStaticScene();
+    testSceneCutDetectorCommitsTrailingCandidate();
     std::puts("tracking tests passed");
     return 0;
 }
