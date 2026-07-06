@@ -3,6 +3,7 @@
 #include "redactly/DetectionGeometry.hpp"
 
 #include <algorithm>
+#include <cmath>
 #include <utility>
 
 namespace redactly
@@ -34,6 +35,17 @@ namespace redactly
                     a.y + (b.y - a.y) * t,
                     a.width + (b.width - a.width) * t,
                     a.height + (b.height - a.height) * t};
+        }
+
+        bool gapMotionTooFast(const cv::Rect2f &a, const cv::Rect2f &b, int gap)
+        {
+            constexpr float kMaxShiftPerFrame = 0.75F;
+            const cv::Point2f from = boxCenter(a);
+            const cv::Point2f to = boxCenter(b);
+            const float distance = std::hypot(to.x - from.x, to.y - from.y);
+            const float perFrame = distance / static_cast<float>(gap + 1);
+            const float scale = std::max({a.width, a.height, b.width, b.height});
+            return scale > 0.0F && perFrame > kMaxShiftPerFrame * scale;
         }
 
         struct Match
@@ -109,7 +121,14 @@ namespace redactly
     {
         const auto &last = track.boxes.back();
         const float dt = static_cast<float>(frame - lastFrame);
-        const cv::Point2f center = boxCenter(last.box) + velocity * dt;
+        cv::Point2f shift = velocity * dt;
+        const float maxShift = std::max(last.box.width, last.box.height);
+        const float shiftLength = std::hypot(shift.x, shift.y);
+        if (shiftLength > maxShift)
+        {
+            shift *= maxShift / shiftLength;
+        }
+        const cv::Point2f center = boxCenter(last.box) + shift;
         return boxWithCenter(last.box, center);
     }
 
@@ -330,7 +349,8 @@ namespace redactly
             filled.push_back(current);
 
             const int gap = next.frame - current.frame - 1;
-            if (gap < 1 || gap > maxGap || cuts.spansCut(current.frame, next.frame))
+            if (gap < 1 || gap > maxGap || cuts.spansCut(current.frame, next.frame)
+                || gapMotionTooFast(current.box, next.box, gap))
             {
                 continue;
             }
