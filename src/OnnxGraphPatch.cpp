@@ -109,7 +109,7 @@ namespace redactly
         {
             while (value >= 0x80U)
             {
-                out.push_back(static_cast<std::uint8_t>(value) | 0x80U);
+                out.push_back(static_cast<std::uint8_t>((value & 0x7FU) | 0x80U));
                 value >>= 7;
             }
             out.push_back(static_cast<std::uint8_t>(value));
@@ -246,7 +246,7 @@ namespace redactly
             });
         }
 
-        bool stripOutputShape(PbField &output)
+        bool makeOutputShapeDynamic(PbField &output)
         {
             return rewriteNested(output, 2, [](PbField &type)
             {
@@ -257,10 +257,24 @@ namespace redactly
                     {
                         return false;
                     }
-                    std::erase_if(*parsed, [](const PbField &field)
+                    auto *shape = findFirst(*parsed, 2, kWireLengthDelimited);
+                    if (shape == nullptr)
                     {
-                        return field.number == 2;
-                    });
+                        return true;
+                    }
+                    auto shapeFields = parseMessage(shape->bytes);
+                    if (!shapeFields)
+                    {
+                        return false;
+                    }
+                    for (auto &dimension: *shapeFields)
+                    {
+                        if (dimension.number == 1 && dimension.wireType == kWireLengthDelimited)
+                        {
+                            dimension.bytes.clear();
+                        }
+                    }
+                    shape->bytes = serializeMessage(*shapeFields);
                     tensor.bytes = serializeMessage(*parsed);
                     return true;
                 });
@@ -313,7 +327,8 @@ namespace redactly
         };
 
         ResizePatch patchResizeNode(PbField &nodeField,
-                                    const std::set<std::string> &initializerNames)
+                                    const std::set<std::string> &initializerNames,
+                                    std::set<std::string> &detachedInitializers)
         {
             auto node = parseMessage(nodeField.bytes);
             if (!node)
@@ -347,6 +362,7 @@ namespace redactly
                 return ResizePatch::Unsupported;
             }
 
+            detachedInitializers.insert(fieldString((*node)[inputIndices[3]]));
             (*node)[inputIndices[2]] = makeStringField(1, kScalesInitializerName);
             node->erase(node->begin() + static_cast<std::ptrdiff_t>(inputIndices[3]));
             nodeField.bytes = serializeMessage(*node);
@@ -430,11 +446,13 @@ namespace redactly
             return std::nullopt;
         }
 
+        std::set<std::string> detachedInitializers;
         for (auto &field: *graph)
         {
             if (field.number == 1 && field.wireType == kWireLengthDelimited)
             {
-                if (patchResizeNode(field, initializerNames) == ResizePatch::Unsupported)
+                if (patchResizeNode(field, initializerNames, detachedInitializers)
+                    == ResizePatch::Unsupported)
                 {
                     return std::nullopt;
                 }
@@ -445,7 +463,7 @@ namespace redactly
         {
             if (field.number == 12 && field.wireType == kWireLengthDelimited)
             {
-                if (!stripOutputShape(field))
+                if (!makeOutputShapeDynamic(field))
                 {
                     return std::nullopt;
                 }
@@ -456,6 +474,49 @@ namespace redactly
         {
             return field.number == 13;
         });
+
+        if (!detachedInitializers.empty())
+        {
+            std::set<std::string> referencedInputs;
+            for (const auto &field: *graph)
+            {
+                if (field.number != 1 || field.wireType != kWireLengthDelimited)
+                {
+                    continue;
+                }
+                const auto node = parseMessage(field.bytes);
+                if (!node)
+                {
+                    continue;
+                }
+                for (const auto &entry: *node)
+                {
+                    if (entry.number == 1 && entry.wireType == kWireLengthDelimited)
+                    {
+                        referencedInputs.insert(fieldString(entry));
+                    }
+                }
+            }
+            std::erase_if(*graph, [&](const PbField &field)
+            {
+                if (field.number != 5 || field.wireType != kWireLengthDelimited)
+                {
+                    return false;
+                }
+                auto initializer = parseMessage(field.bytes);
+                if (!initializer)
+                {
+                    return false;
+                }
+                const auto *name = findFirst(*initializer, 8, kWireLengthDelimited);
+                if (name == nullptr)
+                {
+                    return false;
+                }
+                const std::string text = fieldString(*name);
+                return detachedInitializers.contains(text) && !referencedInputs.contains(text);
+            });
+        }
 
         graph->push_back(makeScalesInitializer());
         graphField->bytes = serializeMessage(*graph);
