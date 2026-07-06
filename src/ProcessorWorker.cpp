@@ -318,8 +318,23 @@ namespace redactly
                 if (!detector_)
                 {
                     emit logMessage(tr("Loading face detection model..."));
-                    detector_ = std::make_shared<ScrfdFaceDetector>(modelPath_.toStdString(), 640,
-                                                                    gpuAcceleration_);
+                    try
+                    {
+                        detector_ = std::make_shared<ScrfdFaceDetector>(modelPath_.toStdString(),
+                                                                        640, gpuAcceleration_);
+                        if (detector_->accelerator() != OrtAccelerator::None)
+                        {
+                            const cv::Mat warmupFrame(640, 640, CV_8UC3, cv::Scalar(0, 0, 0));
+                            detector_->detect(warmupFrame, scoreThreshold_, nmsThreshold_);
+                        }
+                    }
+                    catch (const Ort::Exception &)
+                    {
+                        emit logMessage(tr("GPU acceleration can't run the face model; "
+                                           "using the CPU instead."));
+                        detector_ = std::make_shared<ScrfdFaceDetector>(modelPath_.toStdString(),
+                                                                        640, false);
+                    }
                 } else
                 {
                     emit logMessage(tr("Reusing loaded face detection model."));
@@ -333,8 +348,23 @@ namespace redactly
                 if (!plateDetector_)
                 {
                     emit logMessage(tr("Loading license plate detection model..."));
-                    plateDetector_ = std::make_shared<PlateDetector>(
-                        pathToUtf8(pathFromQString(plateModelPath_)), gpuAcceleration_);
+                    try
+                    {
+                        plateDetector_ = std::make_shared<PlateDetector>(
+                            pathToUtf8(pathFromQString(plateModelPath_)), gpuAcceleration_);
+                        if (plateDetector_->accelerator() != OrtAccelerator::None)
+                        {
+                            const cv::Mat warmupFrame(512, 512, CV_8UC3, cv::Scalar(0, 0, 0));
+                            plateDetector_->detect(warmupFrame, scoreThreshold_, nmsThreshold_);
+                        }
+                    }
+                    catch (const Ort::Exception &)
+                    {
+                        emit logMessage(tr("GPU acceleration can't run the license plate model; "
+                                           "using the CPU instead."));
+                        plateDetector_ = std::make_shared<PlateDetector>(
+                            pathToUtf8(pathFromQString(plateModelPath_)), false);
+                    }
                 } else
                 {
                     emit logMessage(tr("Reusing loaded license plate detection model."));
@@ -843,8 +873,28 @@ namespace redactly
         {
             emit logMessage(tr("Loading face detection model for video (%1 px)...")
                                 .arg(kVideoDetectionInputSize));
-            videoDetector_ = std::make_shared<ScrfdFaceDetector>(
-                modelPath_.toStdString(), kVideoDetectionInputSize, gpuAcceleration_);
+            try
+            {
+                videoDetector_ = std::make_shared<ScrfdFaceDetector>(
+                    modelPath_.toStdString(), kVideoDetectionInputSize, gpuAcceleration_);
+                if (videoDetector_->accelerator() != OrtAccelerator::None)
+                {
+                    const cv::Mat warmupFrame(kVideoDetectionInputSize, kVideoDetectionInputSize,
+                                              CV_8UC3, cv::Scalar(0, 0, 0));
+                    videoDetector_->detect(warmupFrame, scoreThreshold_, nmsThreshold_);
+                }
+            }
+            catch (const Ort::Exception &)
+            {
+                emit logMessage(tr("GPU acceleration can't run the video face model at %1 px; "
+                                   "using the CPU instead.")
+                                    .arg(kVideoDetectionInputSize));
+                videoDetector_ = std::make_shared<ScrfdFaceDetector>(
+                    modelPath_.toStdString(), kVideoDetectionInputSize, false);
+            }
+            emit logMessage(tr("Video face detection backend: %1")
+                                .arg(QString::fromLatin1(
+                                    ortAcceleratorName(videoDetector_->accelerator()))));
         }
 
         const float detectionThreshold =
