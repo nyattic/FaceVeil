@@ -68,7 +68,17 @@ namespace redactly
         const std::u8string modelU8(modelPath.begin(), modelPath.end());
         const std::filesystem::path modelFsPath(modelU8);
         const auto modelBytes = readModelFile(modelFsPath);
-        session_ = Ort::Session(env_, modelBytes.data(), modelBytes.size(), sessionOptions_);
+        if (accelerator_ == OrtAccelerator::None)
+        {
+            session_ = Ort::Session(env_, modelBytes.data(), modelBytes.size(), sessionOptions_);
+        }
+        else
+        {
+            Ort::SessionOptions metadataOptions;
+            metadataOptions.SetGraphOptimizationLevel(GraphOptimizationLevel::ORT_DISABLE_ALL);
+            metadataOptions.SetIntraOpNumThreads(1);
+            session_ = Ort::Session(env_, modelBytes.data(), modelBytes.size(), metadataOptions);
+        }
 
         Ort::AllocatorWithDefaultOptions allocator;
 
@@ -138,12 +148,17 @@ namespace redactly
             }
             if (static_cast<int>(modelHeight) != inputSize_)
             {
-                adoptDynamicSession(modelBytes, static_cast<int>(modelHeight));
+                adoptFixedInputSession(modelBytes, static_cast<int>(modelHeight));
             }
             else
             {
                 inputSize_ = static_cast<int>(modelHeight);
+                adoptOriginalSessionIfAccelerated(modelBytes);
             }
+        }
+        else
+        {
+            adoptFixedInputSession(modelBytes, 0);
         }
 
         for (size_t i = 0; i < std::min<size_t>(outputNames_.size(), kStrides.size() * 2U); ++i)
@@ -168,54 +183,71 @@ namespace redactly
         }
     }
 
-    void ScrfdFaceDetector::adoptDynamicSession(const std::vector<std::uint8_t> &modelBytes,
-                                                int fixedSize)
+    void ScrfdFaceDetector::adoptOriginalSessionIfAccelerated(
+            const std::vector<std::uint8_t> &modelBytes)
     {
-        const auto patched = makeOnnxSpatialDimsDynamic(modelBytes);
-        if (!patched)
+        if (accelerator_ == OrtAccelerator::None)
         {
-            inputSize_ = fixedSize;
             return;
         }
-        try
-        {
-            Ort::Session dynamicSession(env_, patched->data(), patched->size(), sessionOptions_);
+        session_ = Ort::Session(env_, modelBytes.data(), modelBytes.size(), sessionOptions_);
+    }
 
-            std::vector<float> probe(
-                    static_cast<std::size_t>(kChannels) * inputSize_ * inputSize_, 0.0F);
-            const std::array<int64_t, 4> probeShape = {1, kChannels, inputSize_, inputSize_};
-            Ort::MemoryInfo memoryInfo =
-                    Ort::MemoryInfo::CreateCpu(OrtArenaAllocator, OrtMemTypeDefault);
-            Ort::Value probeTensor = Ort::Value::CreateTensor<float>(
-                    memoryInfo, probe.data(), probe.size(), probeShape.data(), probeShape.size());
-
-            std::vector<const char *> inputPtrs;
-            std::vector<const char *> outputPtrs;
-            for (const auto &name: inputNames_)
-            {
-                inputPtrs.push_back(name.c_str());
-            }
-            for (const auto &name: outputNames_)
-            {
-                outputPtrs.push_back(name.c_str());
-            }
-            dynamicSession.Run(Ort::RunOptions{nullptr}, inputPtrs.data(), &probeTensor, 1,
-                               outputPtrs.data(), outputPtrs.size());
-
-            session_ = std::move(dynamicSession);
-        }
-        catch (const Ort::Exception &)
+    void ScrfdFaceDetector::adoptFixedInputSession(const std::vector<std::uint8_t> &modelBytes,
+                                                   int fallbackSize)
+    {
+        const bool patchable = inputSize_ > 0 && inputSize_ <= kMaxInputSize
+                               && inputSize_ % kStrides.back() == 0;
+        const auto patched = patchable ? makeOnnxSpatialDimsFixed(modelBytes, inputSize_)
+                                       : std::nullopt;
+        if (patched)
         {
-            if (accelerator_ != OrtAccelerator::None)
+            try
             {
-                throw;
+                Ort::Session fixedSession(env_, patched->data(), patched->size(),
+                                          sessionOptions_);
+
+                std::vector<float> probe(
+                        static_cast<std::size_t>(kChannels) * inputSize_ * inputSize_, 0.0F);
+                const std::array<int64_t, 4> probeShape = {1, kChannels, inputSize_, inputSize_};
+                Ort::MemoryInfo memoryInfo =
+                        Ort::MemoryInfo::CreateCpu(OrtArenaAllocator, OrtMemTypeDefault);
+                Ort::Value probeTensor = Ort::Value::CreateTensor<float>(
+                        memoryInfo, probe.data(), probe.size(), probeShape.data(),
+                        probeShape.size());
+
+                std::vector<const char *> inputPtrs;
+                std::vector<const char *> outputPtrs;
+                for (const auto &name: inputNames_)
+                {
+                    inputPtrs.push_back(name.c_str());
+                }
+                for (const auto &name: outputNames_)
+                {
+                    outputPtrs.push_back(name.c_str());
+                }
+                fixedSession.Run(Ort::RunOptions{nullptr}, inputPtrs.data(), &probeTensor, 1,
+                                 outputPtrs.data(), outputPtrs.size());
+
+                session_ = std::move(fixedSession);
+                return;
             }
-            inputSize_ = fixedSize;
+            catch (const Ort::Exception &)
+            {
+                if (fallbackSize > 0 && accelerator_ != OrtAccelerator::None)
+                {
+                    throw;
+                }
+            }
+            catch (const std::exception &)
+            {
+            }
         }
-        catch (const std::exception &)
+        if (fallbackSize > 0)
         {
-            inputSize_ = fixedSize;
+            inputSize_ = fallbackSize;
         }
+        adoptOriginalSessionIfAccelerated(modelBytes);
     }
 
     FaceDetections ScrfdFaceDetector::detect(const cv::Mat &bgrImage, float scoreThreshold, float nmsThreshold)

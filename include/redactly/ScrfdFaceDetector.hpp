@@ -37,7 +37,9 @@ namespace redactly
             int resizedHeight = 0;
         };
 
-        void adoptDynamicSession(const std::vector<std::uint8_t> &modelBytes, int fixedSize);
+        void adoptOriginalSessionIfAccelerated(const std::vector<std::uint8_t> &modelBytes);
+
+        void adoptFixedInputSession(const std::vector<std::uint8_t> &modelBytes, int fallbackSize);
 
         [[nodiscard]] PreparedImage prepare(const cv::Mat &bgrImage) const;
 

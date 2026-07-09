@@ -1,6 +1,5 @@
 #include "redactly/OnnxGraphPatch.hpp"
 
-#include <algorithm>
 #include <array>
 #include <cstring>
 #include <set>
@@ -190,32 +189,25 @@ namespace redactly
             return true;
         }
 
-        bool makeDimensionDynamic(PbField &dimension, std::string_view name)
+        bool setDimensionValue(PbField &dimension, int size)
         {
             const auto parsed = parseMessage(dimension.bytes);
             if (!parsed)
             {
                 return false;
             }
-            const auto fixed = std::ranges::any_of(*parsed, [](const PbField &field)
-            {
-                return field.number == 1 && field.wireType == kWireVarint && field.varint > 0;
-            });
-            if (!fixed)
-            {
-                return false;
-            }
-            dimension.bytes = serializeMessage({makeStringField(2, name)});
+            dimension.bytes = serializeMessage(
+                {makeVarintField(1, static_cast<std::uint64_t>(size))});
             return true;
         }
 
-        bool makeInputSpatialDimsDynamic(PbField &input)
+        bool setInputSpatialDims(PbField &input, int size)
         {
-            return rewriteNested(input, 2, [](PbField &type)
+            return rewriteNested(input, 2, [size](PbField &type)
             {
-                return rewriteNested(type, 1, [](PbField &tensor)
+                return rewriteNested(type, 1, [size](PbField &tensor)
                 {
-                    return rewriteNested(tensor, 2, [](PbField &shape)
+                    return rewriteNested(tensor, 2, [size](PbField &shape)
                     {
                         auto parsed = parseMessage(shape.bytes);
                         if (!parsed)
@@ -234,8 +226,8 @@ namespace redactly
                         {
                             return false;
                         }
-                        if (!makeDimensionDynamic(*dims[2], "height")
-                            || !makeDimensionDynamic(*dims[3], "width"))
+                        if (!setDimensionValue(*dims[2], size)
+                            || !setDimensionValue(*dims[3], size))
                         {
                             return false;
                         }
@@ -246,7 +238,7 @@ namespace redactly
             });
         }
 
-        bool makeOutputShapeDynamic(PbField &output)
+        bool makeOutputShapeUnknown(PbField &output)
         {
             return rewriteNested(output, 2, [](PbField &type)
             {
@@ -340,10 +332,6 @@ namespace redactly
             {
                 return ResizePatch::NotResize;
             }
-            if (!resizeModeIsSupported(*node))
-            {
-                return ResizePatch::Unsupported;
-            }
 
             std::vector<std::size_t> inputIndices;
             for (std::size_t i = 0; i < node->size(); ++i)
@@ -355,9 +343,13 @@ namespace redactly
             }
             if (inputIndices.size() != 4)
             {
-                return ResizePatch::Unsupported;
+                return ResizePatch::NotResize;
             }
             if (!initializerNames.contains(fieldString((*node)[inputIndices[3]])))
+            {
+                return ResizePatch::NotResize;
+            }
+            if (!resizeModeIsSupported(*node))
             {
                 return ResizePatch::Unsupported;
             }
@@ -393,8 +385,12 @@ namespace redactly
     }
 
     std::optional<std::vector<std::uint8_t>>
-    makeOnnxSpatialDimsDynamic(const std::vector<std::uint8_t> &modelBytes)
+    makeOnnxSpatialDimsFixed(const std::vector<std::uint8_t> &modelBytes, int size)
     {
+        if (size <= 0)
+        {
+            return std::nullopt;
+        }
         auto model = parseMessage(modelBytes);
         if (!model)
         {
@@ -441,20 +437,26 @@ namespace redactly
                 inputs.push_back(&field);
             }
         }
-        if (inputs.size() != 1 || !makeInputSpatialDimsDynamic(*inputs.front()))
+        if (inputs.size() != 1 || !setInputSpatialDims(*inputs.front(), size))
         {
             return std::nullopt;
         }
 
         std::set<std::string> detachedInitializers;
+        bool patchedResize = false;
         for (auto &field: *graph)
         {
             if (field.number == 1 && field.wireType == kWireLengthDelimited)
             {
-                if (patchResizeNode(field, initializerNames, detachedInitializers)
-                    == ResizePatch::Unsupported)
+                switch (patchResizeNode(field, initializerNames, detachedInitializers))
                 {
-                    return std::nullopt;
+                    case ResizePatch::Unsupported:
+                        return std::nullopt;
+                    case ResizePatch::Patched:
+                        patchedResize = true;
+                        break;
+                    case ResizePatch::NotResize:
+                        break;
                 }
             }
         }
@@ -463,7 +465,7 @@ namespace redactly
         {
             if (field.number == 12 && field.wireType == kWireLengthDelimited)
             {
-                if (!makeOutputShapeDynamic(field))
+                if (!makeOutputShapeUnknown(field))
                 {
                     return std::nullopt;
                 }
@@ -518,7 +520,10 @@ namespace redactly
             });
         }
 
-        graph->push_back(makeScalesInitializer());
+        if (patchedResize)
+        {
+            graph->push_back(makeScalesInitializer());
+        }
         graphField->bytes = serializeMessage(*graph);
         return serializeMessage(*model);
     }

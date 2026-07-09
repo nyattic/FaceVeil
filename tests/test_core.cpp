@@ -365,9 +365,11 @@ namespace
 {
     void testOnnxPatchRejectsInvalidBytes()
     {
-        assert(!redactly::makeOnnxSpatialDimsDynamic({}).has_value());
+        assert(!redactly::makeOnnxSpatialDimsFixed({}, 320).has_value());
         const std::vector<std::uint8_t> garbage = {0xFF, 0xFF, 0xFF, 0x01, 0x02, 0x9C};
-        assert(!redactly::makeOnnxSpatialDimsDynamic(garbage).has_value());
+        assert(!redactly::makeOnnxSpatialDimsFixed(garbage, 320).has_value());
+        assert(!redactly::makeOnnxSpatialDimsFixed(garbage, 0).has_value());
+        assert(!redactly::makeOnnxSpatialDimsFixed(garbage, -320).has_value());
     }
 
     void testFixedScrfdModelRunsAtRequestedSize()
@@ -382,6 +384,23 @@ namespace
 
         redactly::ScrfdFaceDetector nativeSize(modelPath.string(), 640);
         assert(nativeSize.inputSize() == 640);
+
+        redactly::ScrfdFaceDetector patchedSize(modelPath.string(), 320);
+        assert(patchedSize.inputSize() == 320);
+
+        const cv::Mat blank(180, 320, CV_8UC3, cv::Scalar(30, 30, 30));
+        assert(patchedSize.detect(blank, 0.5F, 0.4F).empty());
+    }
+
+    void testDynamicScrfdModelRunsAtRequestedSize()
+    {
+        const auto modelPath = std::filesystem::path(__FILE__).parent_path().parent_path()
+                               / "models" / "10g_bnkps.onnx";
+        if (!std::filesystem::exists(modelPath))
+        {
+            std::puts("skipping dynamic-model patch test: models/10g_bnkps.onnx not present");
+            return;
+        }
 
         redactly::ScrfdFaceDetector patchedSize(modelPath.string(), 320);
         assert(patchedSize.inputSize() == 320);
@@ -405,6 +424,7 @@ int main()
     testNonMaxSuppression();
     testOnnxPatchRejectsInvalidBytes();
     testFixedScrfdModelRunsAtRequestedSize();
+    testDynamicScrfdModelRunsAtRequestedSize();
     testDestinationPathSafety();
 #ifndef _WIN32
     testDestinationRejectsSymlinkEscape();

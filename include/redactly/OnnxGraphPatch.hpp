@@ -7,5 +7,5 @@
 namespace redactly
 {
     [[nodiscard]] std::optional<std::vector<std::uint8_t>>
-    makeOnnxSpatialDimsDynamic(const std::vector<std::uint8_t> &modelBytes);
+    makeOnnxSpatialDimsFixed(const std::vector<std::uint8_t> &modelBytes, int size);
 }
