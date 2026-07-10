@@ -8,7 +8,7 @@
 #include "redactly/PlateDetector.hpp"
 #include "redactly/ProcessorWorker.hpp"
 #include "redactly/ReviewDialog.hpp"
-#include "redactly/ScrfdFaceDetector.hpp"
+#include "redactly/YunetFaceDetector.hpp"
 #include "redactly/SettingsDialog.hpp"
 #include "redactly/Theme.hpp"
 #include "redactly/UpdateChecker.hpp"
@@ -382,7 +382,7 @@ namespace redactly
             auto *modelHint = makeSectionHint(card);
             cardLayout->addWidget(modelHint);
             addRetranslation([modelHint]
-                             { modelHint->setText(tr("Choose speed vs. accuracy, or load a custom SCRFD ONNX file.")); });
+                             { modelHint->setText(tr("Use the built-in YuNet model, or load a compatible custom YuNet ONNX file.")); });
 
             detectCombo_ = new QComboBox(card);
             detectCombo_->setMinimumHeight(34);
@@ -411,7 +411,7 @@ namespace redactly
             pathRow->setSpacing(8);
             modelPathEdit_ = new QLineEdit(card);
             modelPathEdit_->setReadOnly(true);
-            addRetranslation([this]{ modelPathEdit_->setPlaceholderText(tr("Bundled SCRFD model path")); });
+            addRetranslation([this]{ modelPathEdit_->setPlaceholderText(tr("Built-in YuNet model path")); });
             downloadButton_ = new QPushButton(card);
             downloadButton_->setObjectName("primaryButton");
             addRetranslation([this]{ downloadButton_->setText(tr("Download")); });
@@ -948,7 +948,7 @@ namespace redactly
 
     void MainWindow::chooseModel()
     {
-        const auto path = QFileDialog::getOpenFileName(this, tr("Select SCRFD ONNX Model"), QDir::currentPath(),
+        const auto path = QFileDialog::getOpenFileName(this, tr("Select YuNet ONNX Model"), QDir::currentPath(),
                                                        tr("ONNX Models (*.onnx)"));
         if (!path.isEmpty())
         {
@@ -1010,7 +1010,7 @@ namespace redactly
         {
             if (modelPath.isEmpty())
             {
-                reportValidationIssue(tr("Choose a SCRFD ONNX model first."), modelCombo_);
+                reportValidationIssue(tr("Choose a YuNet ONNX model first."), modelCombo_);
                 return;
             }
 
@@ -1019,7 +1019,7 @@ namespace redactly
                 const BuiltinModel *builtin = isCustom ? nullptr : findBuiltinModel(modelPath);
                 if (builtin == nullptr)
                 {
-                    appendLog(tr("Choose a valid SCRFD ONNX model first."));
+                    appendLog(tr("Choose a valid YuNet ONNX model first."));
                     return;
                 }
                 appendLog(tr("Downloading %1…").arg(builtin->fileName));
@@ -1667,10 +1667,9 @@ namespace redactly
 
         addRetranslation([this]
                          {
-                             if (modelCombo_->count() >= 2)
+                             if (modelCombo_->count() >= 1)
                              {
-                                 modelCombo_->setItemText(0, tr("Fast  ·  SCRFD 2.5G"));
-                                 modelCombo_->setItemText(1, tr("Accurate  ·  SCRFD 10G"));
+                                 modelCombo_->setItemText(0, tr("YuNet  ·  OpenCV"));
                              }
                          });
 

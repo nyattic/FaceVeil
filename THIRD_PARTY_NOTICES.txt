@@ -6,10 +6,37 @@ distributed under its own license, reproduced in full in this file. These
 notices apply to the accompanying binary distribution of Redactly and are
 separate from Redactly's own license (GNU General Public License v3.0 or later).
 
-The SCRFD face-detection models are NOT bundled with Redactly; the application
-downloads them on first use from their source. They originate from InsightFace
-and are available for non-commercial research use only. See the README for
-details.
+The YuNet face-detection model is NOT bundled with Redactly; the application
+downloads it on first use from OpenCV Zoo. It is provided under the MIT License
+reproduced below.
+
+================================================================================
+YuNet face-detection model  (MIT)
+--
+Source: https://github.com/opencv/opencv_zoo/tree/main/models/face_detection_yunet
+
+MIT License
+
+Copyright (c) 2020 Shiqi Yu <shiqi.yu@gmail.com>
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+================================================================================
 
 ================================================================================
 FFmpeg  (GPL-2.0-or-later builds; the FFmpeg core is LGPL-2.1-or-later)

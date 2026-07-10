@@ -55,7 +55,8 @@ int main(int argc, char *argv[])
             auto name = session.GetInputNameAllocated(i, allocator);
             const auto typeInfo = session.GetInputTypeInfo(i);
             const auto info = typeInfo.GetTensorTypeAndShapeInfo();
-            spdlog::info("  {} {}", name.get(), shapeToString(info.GetShape()));
+            spdlog::info("  {} type={} {}", name.get(), static_cast<int>(info.GetElementType()),
+                         shapeToString(info.GetShape()));
         }
 
         spdlog::info("Outputs");
@@ -64,7 +65,8 @@ int main(int argc, char *argv[])
             auto name = session.GetOutputNameAllocated(i, allocator);
             const auto typeInfo = session.GetOutputTypeInfo(i);
             const auto info = typeInfo.GetTensorTypeAndShapeInfo();
-            spdlog::info("  {} {}", name.get(), shapeToString(info.GetShape()));
+            spdlog::info("  {} type={} {}", name.get(), static_cast<int>(info.GetElementType()),
+                         shapeToString(info.GetShape()));
         }
     }
     catch (const std::exception &exception)

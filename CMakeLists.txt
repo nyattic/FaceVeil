@@ -100,7 +100,7 @@ add_library(redactly_core STATIC
     src/PlateDetector.cpp
     src/ProcessorWorker.cpp
     src/SceneCut.cpp
-    src/ScrfdFaceDetector.cpp
+    src/YunetFaceDetector.cpp
     src/Tracking.cpp
     src/VideoIo.cpp
     src/VideoProcessor.cpp
@@ -120,7 +120,7 @@ add_library(redactly_core STATIC
     include/redactly/ProcessorWorker.hpp
     include/redactly/ReviewTypes.hpp
     include/redactly/SceneCut.hpp
-    include/redactly/ScrfdFaceDetector.hpp
+    include/redactly/YunetFaceDetector.hpp
     include/redactly/Tracking.hpp
     include/redactly/VideoIo.hpp
     include/redactly/VideoProcessor.hpp

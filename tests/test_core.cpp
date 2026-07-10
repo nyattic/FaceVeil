@@ -6,7 +6,7 @@
 #include "redactly/OutputPlan.hpp"
 #include "redactly/PathSafety.hpp"
 #include "redactly/ProcessorWorker.hpp"
-#include "redactly/ScrfdFaceDetector.hpp"
+#include "redactly/YunetFaceDetector.hpp"
 
 #include <opencv2/core.hpp>
 #include <opencv2/imgcodecs.hpp>
@@ -446,37 +446,20 @@ namespace
         assert(!redactly::makeOnnxSpatialDimsFixed(garbage, -320).has_value());
     }
 
-    void testFixedScrfdModelRunsAtRequestedSize()
+    void testYunetModelRunsAtRequestedSize()
     {
         const auto modelPath = std::filesystem::path(__FILE__).parent_path().parent_path()
-                               / "models" / "2.5g_bnkps.onnx";
+                               / "models" / "face_detection_yunet_2026may.onnx";
         if (!std::filesystem::exists(modelPath))
         {
-            std::puts("skipping fixed-model patch test: models/2.5g_bnkps.onnx not present");
+            std::puts("skipping YuNet model test: model not present");
             return;
         }
 
-        redactly::ScrfdFaceDetector nativeSize(modelPath.string(), 640);
+        redactly::YunetFaceDetector nativeSize(modelPath.string(), 640, false);
         assert(nativeSize.inputSize() == 640);
 
-        redactly::ScrfdFaceDetector patchedSize(modelPath.string(), 320);
-        assert(patchedSize.inputSize() == 320);
-
-        const cv::Mat blank(180, 320, CV_8UC3, cv::Scalar(30, 30, 30));
-        assert(patchedSize.detect(blank, 0.5F, 0.4F).empty());
-    }
-
-    void testDynamicScrfdModelRunsAtRequestedSize()
-    {
-        const auto modelPath = std::filesystem::path(__FILE__).parent_path().parent_path()
-                               / "models" / "10g_bnkps.onnx";
-        if (!std::filesystem::exists(modelPath))
-        {
-            std::puts("skipping dynamic-model patch test: models/10g_bnkps.onnx not present");
-            return;
-        }
-
-        redactly::ScrfdFaceDetector patchedSize(modelPath.string(), 320);
+        redactly::YunetFaceDetector patchedSize(modelPath.string(), 320, false);
         assert(patchedSize.inputSize() == 320);
 
         const cv::Mat blank(180, 320, CV_8UC3, cv::Scalar(30, 30, 30));
@@ -499,8 +482,7 @@ int main()
     testIntersectionOverUnion();
     testNonMaxSuppression();
     testOnnxPatchRejectsInvalidBytes();
-    testFixedScrfdModelRunsAtRequestedSize();
-    testDynamicScrfdModelRunsAtRequestedSize();
+    testYunetModelRunsAtRequestedSize();
     testDestinationPathSafety();
 #ifndef _WIN32
     testDestinationRejectsSymlinkEscape();

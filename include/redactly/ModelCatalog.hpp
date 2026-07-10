@@ -17,7 +17,7 @@ namespace redactly
         qint64 approxBytes;
     };
 
-    const std::array<BuiltinModel, 2> &builtinModels();
+    const std::array<BuiltinModel, 1> &builtinModels();
     const BuiltinModel &plateModel();
     const BuiltinModel *findBuiltinModel(const QString &path);
 

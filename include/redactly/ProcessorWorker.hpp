@@ -15,7 +15,7 @@
 
 namespace redactly
 {
-    class ScrfdFaceDetector;
+    class YunetFaceDetector;
     class PlateDetector;
 
     struct ProcessingRequest
@@ -43,9 +43,9 @@ namespace redactly
 
     struct DetectorCache
     {
-        std::shared_ptr<ScrfdFaceDetector> face;
+        std::shared_ptr<YunetFaceDetector> face;
         std::shared_ptr<PlateDetector> plate;
-        std::shared_ptr<ScrfdFaceDetector> videoFace;
+        std::shared_ptr<YunetFaceDetector> videoFace;
     };
 
     enum class RunOutcome
@@ -75,11 +75,11 @@ namespace redactly
 
         ~ProcessorWorker() override;
 
-        [[nodiscard]] std::shared_ptr<ScrfdFaceDetector> takeDetector();
+        [[nodiscard]] std::shared_ptr<YunetFaceDetector> takeDetector();
 
         [[nodiscard]] std::shared_ptr<PlateDetector> takePlateDetector();
 
-        [[nodiscard]] std::shared_ptr<ScrfdFaceDetector> takeVideoDetector();
+        [[nodiscard]] std::shared_ptr<YunetFaceDetector> takeVideoDetector();
 
     public slots:
         void process();
@@ -132,9 +132,9 @@ namespace redactly
         int videoCrf_;
         std::atomic<bool> cancelled_{false};
         std::mutex detectMutex_;
-        std::shared_ptr<ScrfdFaceDetector> detector_;
+        std::shared_ptr<YunetFaceDetector> detector_;
         std::shared_ptr<PlateDetector> plateDetector_;
-        std::shared_ptr<ScrfdFaceDetector> videoDetector_;
+        std::shared_ptr<YunetFaceDetector> videoDetector_;
     };
 }
 

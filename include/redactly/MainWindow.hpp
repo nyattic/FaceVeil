@@ -30,7 +30,7 @@ class QWidget;
 namespace redactly
 {
     class ProcessorWorker;
-    class ScrfdFaceDetector;
+    class YunetFaceDetector;
     class PlateDetector;
 
     class MainWindow final : public QMainWindow
@@ -150,8 +150,8 @@ namespace redactly
         ProcessorWorker *worker_ = nullptr;
         QElapsedTimer runTimer_;
 
-        std::shared_ptr<ScrfdFaceDetector> cachedDetector_;
-        std::shared_ptr<ScrfdFaceDetector> cachedVideoDetector_;
+        std::shared_ptr<YunetFaceDetector> cachedDetector_;
+        std::shared_ptr<YunetFaceDetector> cachedVideoDetector_;
         QString cachedDetectorModelPath_;
         std::shared_ptr<PlateDetector> cachedPlateDetector_;
         QString cachedPlateModelPath_;

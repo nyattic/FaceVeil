@@ -9,7 +9,7 @@
 #include "redactly/PlateDetector.hpp"
 #include "redactly/Mosaic.hpp"
 #include "redactly/ReviewTypes.hpp"
-#include "redactly/ScrfdFaceDetector.hpp"
+#include "redactly/YunetFaceDetector.hpp"
 #include "redactly/VideoIo.hpp"
 #include "redactly/VideoProcessor.hpp"
 
@@ -224,7 +224,7 @@ namespace redactly
 
     ProcessorWorker::~ProcessorWorker() = default;
 
-    std::shared_ptr<ScrfdFaceDetector> ProcessorWorker::takeDetector()
+    std::shared_ptr<YunetFaceDetector> ProcessorWorker::takeDetector()
     {
         return std::move(detector_);
     }
@@ -234,7 +234,7 @@ namespace redactly
         return std::move(plateDetector_);
     }
 
-    std::shared_ptr<ScrfdFaceDetector> ProcessorWorker::takeVideoDetector()
+    std::shared_ptr<YunetFaceDetector> ProcessorWorker::takeVideoDetector()
     {
         return std::move(videoDetector_);
     }
@@ -252,7 +252,7 @@ namespace redactly
                     emit logMessage(tr("Loading face detection model..."));
                     try
                     {
-                        detector_ = std::make_shared<ScrfdFaceDetector>(modelPath_.toStdString(),
+                        detector_ = std::make_shared<YunetFaceDetector>(modelPath_.toStdString(),
                                                                         640, gpuAcceleration_);
                         if (detector_->accelerator() != OrtAccelerator::None)
                         {
@@ -264,7 +264,7 @@ namespace redactly
                     {
                         emit logMessage(tr("GPU acceleration can't run the face model; "
                                            "using the CPU instead."));
-                        detector_ = std::make_shared<ScrfdFaceDetector>(modelPath_.toStdString(),
+                        detector_ = std::make_shared<YunetFaceDetector>(modelPath_.toStdString(),
                                                                         640, false);
                     }
                 } else
@@ -837,7 +837,7 @@ namespace redactly
             emit logMessage(tr("Loading face detection model for video..."));
             try
             {
-                videoDetector_ = std::make_shared<ScrfdFaceDetector>(
+                videoDetector_ = std::make_shared<YunetFaceDetector>(
                     modelPath_.toStdString(), kVideoDetectionInputSize, gpuAcceleration_);
                 if (videoDetector_->accelerator() != OrtAccelerator::None)
                 {
@@ -851,7 +851,7 @@ namespace redactly
                 emit logMessage(tr("GPU acceleration can't run the video face model at %1 px; "
                                    "using the CPU instead.")
                                     .arg(kVideoDetectionInputSize));
-                videoDetector_ = std::make_shared<ScrfdFaceDetector>(
+                videoDetector_ = std::make_shared<YunetFaceDetector>(
                     modelPath_.toStdString(), kVideoDetectionInputSize, false);
             }
             emit logMessage(tr("Video face detection: %1 px · %2")

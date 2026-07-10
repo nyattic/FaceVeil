@@ -37,17 +37,16 @@ namespace redactly
         return {};
     }
 
-    const std::array<BuiltinModel, 2> &builtinModels()
+    const std::array<BuiltinModel, 1> &builtinModels()
     {
-        static const std::array<BuiltinModel, 2> models = {
+        static const std::array<BuiltinModel, 1> models = {
             BuiltinModel{
-                "Fast  ·  SCRFD 2.5G", "2.5g_bnkps.onnx",
-                "https://huggingface.co/RuteNL/SCRFD-face-detection-ONNX/resolve/main/2.5g_bnkps.onnx",
-                "3f1ac54e769cb5fd76eda11ac3c088eed78d1f51a935a839d04d49b0e770219e", 3291737},
-            BuiltinModel{
-                "Accurate  ·  SCRFD 10G", "10g_bnkps.onnx",
-                "https://huggingface.co/RuteNL/SCRFD-face-detection-ONNX/resolve/main/10g_bnkps.onnx",
-                "5838f7fe053675b1c7a08b633df49e7af5495cee0493c7dcf6697200b85b5b91", 16923827},
+                "YuNet  ·  OpenCV", "face_detection_yunet_2026may.onnx",
+                "https://media.githubusercontent.com/media/opencv/opencv_zoo/main/"
+                "models/face_detection_yunet/"
+                "face_detection_yunet_2026may.onnx",
+                "ebafce4e3c118d6554634be5c27ab333b4c047a9a8c3faf1d7cf93101c22f0f0",
+                229738},
         };
         return models;
     }

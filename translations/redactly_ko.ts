@@ -55,12 +55,12 @@
         <location filename="../src/MainWindow.cpp" line="407"/>
         <source>The %1 model isn&apos;t on this computer yet.
 
-Redactly can download it once (%2 MB) from Hugging Face. The model is provided by InsightFace for non-commercial use. Your images are never uploaded.
+Redactly can download it once (%2 MB) from OpenCV Zoo. The YuNet model is provided under the MIT License. Your images are never uploaded.
 
 Download now?</source>
         <translation>%1 모델이 아직 이 컴퓨터에 없습니다.
 
-Redactly가 Hugging Face에서 한 번(%2 MB) 다운로드할 수 있습니다. 이 모델은 InsightFace가 비상업적 용도로 제공합니다. 사진은 절대 업로드되지 않습니다.
+Redactly가 OpenCV Zoo에서 한 번(%2 MB) 다운로드할 수 있습니다. YuNet 모델은 MIT 라이선스로 제공됩니다. 사진은 절대 업로드되지 않습니다.
 
 지금 다운로드할까요?</translation>
     </message>
@@ -99,8 +99,8 @@ Redactly가 open-image-models 프로젝트(MIT 라이선스)에서 한 번(%1 MB
     </message>
     <message>
         <location filename="../src/MainWindow.cpp" line="462"/>
-        <source>The selected ONNX file is larger than 512 MB. Choose a smaller SCRFD model.</source>
-        <translation>선택한 ONNX 파일이 512 MB보다 큽니다. 더 작은 SCRFD 모델을 선택하세요.</translation>
+        <source>The selected ONNX file is larger than 512 MB. Choose a smaller YuNet model.</source>
+        <translation>선택한 ONNX 파일이 512 MB보다 큽니다. 더 작은 YuNet 모델을 선택하세요.</translation>
     </message>
     <message>
         <location filename="../src/MainWindow.cpp" line="475"/>
@@ -174,13 +174,13 @@ Continue?</source>
     </message>
     <message>
         <location filename="../src/MainWindow.cpp" line="572"/>
-        <source>Choose speed vs. accuracy, or load a custom SCRFD ONNX file.</source>
-        <translation>속도와 정확도 중에서 고르거나, 사용자 SCRFD ONNX 파일을 불러오세요.</translation>
+        <source>Use the built-in YuNet model, or load a compatible custom YuNet ONNX file.</source>
+        <translation>기본 YuNet 모델을 사용하거나 호환되는 사용자 YuNet ONNX 파일을 불러오세요.</translation>
     </message>
     <message>
         <location filename="../src/MainWindow.cpp" line="582"/>
-        <source>Bundled SCRFD model path</source>
-        <translation>기본 제공 SCRFD 모델 경로</translation>
+        <source>Built-in YuNet model path</source>
+        <translation>기본 YuNet 모델 경로</translation>
     </message>
     <message>
         <location filename="../src/MainWindow.cpp" line="584"/>
@@ -474,8 +474,8 @@ Rounded = elliptical mask that follows the face and leaves corners untouched. De
     </message>
     <message>
         <location filename="../src/MainWindow.cpp" line="963"/>
-        <source>Select SCRFD ONNX Model</source>
-        <translation>SCRFD ONNX 모델 선택</translation>
+        <source>Select YuNet ONNX Model</source>
+        <translation>YuNet ONNX 모델 선택</translation>
     </message>
     <message>
         <location filename="../src/MainWindow.cpp" line="964"/>
@@ -510,13 +510,13 @@ Rounded = elliptical mask that follows the face and leaves corners untouched. De
     </message>
     <message>
         <location filename="../src/MainWindow.cpp" line="1018"/>
-        <source>Choose a SCRFD ONNX model first.</source>
-        <translation>먼저 SCRFD ONNX 모델을 선택하세요.</translation>
+        <source>Choose a YuNet ONNX model first.</source>
+        <translation>먼저 YuNet ONNX 모델을 선택하세요.</translation>
     </message>
     <message>
         <location filename="../src/MainWindow.cpp" line="1027"/>
-        <source>Choose a valid SCRFD ONNX model first.</source>
-        <translation>먼저 올바른 SCRFD ONNX 모델을 선택하세요.</translation>
+        <source>Choose a valid YuNet ONNX model first.</source>
+        <translation>먼저 올바른 YuNet ONNX 모델을 선택하세요.</translation>
     </message>
     <message>
         <location filename="../src/MainWindow.cpp" line="1030"/>
@@ -628,13 +628,8 @@ Check these results before sharing them.</source>
     </message>
     <message>
         <location filename="../src/MainWindow.cpp" line="1361"/>
-        <source>Fast  ·  SCRFD 2.5G</source>
-        <translation>빠름  ·  SCRFD 2.5G</translation>
-    </message>
-    <message>
-        <location filename="../src/MainWindow.cpp" line="1362"/>
-        <source>Accurate  ·  SCRFD 10G</source>
-        <translation>정확  ·  SCRFD 10G</translation>
+        <source>YuNet  ·  OpenCV</source>
+        <translation>YuNet  ·  OpenCV</translation>
     </message>
     <message>
         <location filename="../src/MainWindow.cpp" line="1379"/>

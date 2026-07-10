@@ -15,7 +15,7 @@ Download from [Releases](https://github.com/nyattic/Redactly/releases/latest):
 - **Windows** (x64, Windows 10+) — unzip, run `Redactly.exe`. GPU acceleration needs Windows 10 1903+ and a DirectX 12 capable GPU (NVIDIA, AMD, or Intel); without one, detection runs on the CPU.
 - **Linux** (x86_64) — download the `.AppImage`, `chmod +x` it, and run it
 
-The first time you use a built-in model, Redactly downloads it once (3–17 MB) and caches it; after that it runs offline. The face models come from Hugging Face; the license plate model comes from the open-image-models project on GitHub.
+The first time you use a built-in model, Redactly downloads it once and caches it; after that it runs offline. The YuNet face model comes from OpenCV Zoo; the license plate model comes from the open-image-models project on GitHub.
 
 ## Use
 
@@ -39,17 +39,16 @@ Videos are processed in two passes — detection with bidirectional tracking, th
 
 ## Build from source
 
-Requires CMake 3.24+, a C++20 compiler, Qt 6 available to CMake (with the Linguist tools for UI translations; Qt Svg is optional and gives a crisp settings icon, falling back to a glyph without it), OpenCV 4, ONNX Runtime, spdlog, and Exiv2 (optional, for metadata preservation). FFmpeg is not a build dependency, but video processing needs `ffmpeg` and `ffprobe` at runtime (bundled next to the app, or on `PATH`). The detection models (SCRFD for faces, YOLOv9 for license plates) are not build dependencies — the app downloads them on first use, or you can pre-place them (see below).
+Requires CMake 3.24+, a C++20 compiler, Qt 6 available to CMake (with the Linguist tools for UI translations; Qt Svg is optional and gives a crisp settings icon, falling back to a glyph without it), OpenCV 4, ONNX Runtime, spdlog, and Exiv2 (optional, for metadata preservation). FFmpeg is not a build dependency, but video processing needs `ffmpeg` and `ffprobe` at runtime (bundled next to the app, or on `PATH`). The detection models (YuNet for faces, YOLOv9 for license plates) are not build dependencies — the app downloads them on first use, or you can pre-place them (see below).
 
 The built-in models are **not bundled** and **not committed** to this repository. The app downloads them on first use (with an integrity check) and caches them under the platform data directory. To pre-place them for offline use, drop them in `models/`:
 
-- `models/2.5g_bnkps.onnx` — Fast (faces)
-- `models/10g_bnkps.onnx` — Accurate (faces)
+- `models/face_detection_yunet_2026may.onnx` — Faces
 - `models/yolo-v9-t-512-license-plates-end2end.onnx` — License plates
 
-You can also launch the app and use **Browse…** to select a custom SCRFD `.onnx` file.
+You can also launch the app and use **Browse…** to select a compatible custom YuNet `.onnx` file.
 
-Only load custom ONNX models from sources you trust. Redactly checks basic SCRFD tensor compatibility before processing, but ONNX files are still executable model inputs handled by native runtime libraries.
+Only load custom ONNX models from sources you trust. Redactly checks basic YuNet tensor compatibility before processing, but ONNX files are still executable model inputs handled by native runtime libraries.
 
 ### macOS
 
@@ -113,7 +112,7 @@ Packaging scripts: [`scripts/package_macos.sh`](scripts/package_macos.sh), [`scr
 
 ## Privacy
 
-Your images and videos never leave your device — they are read from disk, processed locally (video encoding runs through a local FFmpeg process), and written to the output folder you pick. Redactly makes only two kinds of network request, and neither sends any image or personal data: a one-time download of a detection model the first time you use each built-in model — the face models from Hugging Face, or the license plate model from the open-image-models project on GitHub — and a check at launch against the GitHub Releases API to see whether a newer version exists. The update check can be turned off under **Settings → Check for updates on startup**, and supplying your own model with **Browse…** avoids the model download entirely.
+Your images and videos never leave your device — they are read from disk, processed locally (video encoding runs through a local FFmpeg process), and written to the output folder you pick. Redactly makes only two kinds of network request, and neither sends any image or personal data: a one-time download of a detection model the first time you use each built-in model — the YuNet face model from OpenCV Zoo, or the license plate model from the open-image-models project on GitHub — and a check at launch against the GitHub Releases API to see whether a newer version exists. The update check can be turned off under **Settings → Check for updates on startup**, and supplying your own model with **Browse…** avoids the model download entirely.
 
 ## License
 
@@ -125,7 +124,7 @@ Copyright © 2026 Nyabi.
 
 Redactly is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version. It is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
-**SCRFD models** — the built-in models are **not distributed with Redactly**; the app downloads them on first use from a [Hugging Face mirror](https://huggingface.co/RuteNL/SCRFD-face-detection-ONNX). They originate from [InsightFace](https://github.com/deepinsight/insightface) and are available for **non-commercial research use only**, under their own terms separate from the application license (the mirror's Apache-2.0 tag does not override InsightFace's terms). See the [InsightFace Model Zoo](https://github.com/deepinsight/insightface/blob/master/model_zoo/README.md) for details.
+**YuNet model** — the built-in face detector is **not distributed with Redactly**; the app downloads `face_detection_yunet_2026may.onnx` on first use from [OpenCV Zoo](https://github.com/opencv/opencv_zoo/tree/main/models/face_detection_yunet). The model is provided under the MIT License.
 
 **License plate model** — the built-in license plate detector is **not distributed with Redactly**; the app downloads it on first use from the [open-image-models](https://github.com/ankandrew/open-image-models) project by ankandrew, which is MIT-licensed. It is a YOLOv9-architecture model (see [Citation](#citation)) and is downloaded at runtime and cached locally, under its upstream project's terms. Confirm the current terms with the open-image-models project before any commercial or redistribution use.
 
@@ -134,13 +133,15 @@ Redactly is free software: you can redistribute it and/or modify it under the te
 ## Citation
 
 ```bibtex
-@misc{guo2021sample,
-  title={Sample and Computation Redistribution for Efficient Face Detection},
-  author={Jia Guo and Jiankang Deng and Alexandros Lattas and Stefanos Zafeiriou},
-  year={2021},
-  eprint={2105.04714},
-  archivePrefix={arXiv},
-  primaryClass={cs.CV}
+@article{wu2023yunet,
+  title={YuNet: A Tiny Millisecond-level Face Detector},
+  author={Wei Wu and Hanyang Peng and Shiqi Yu},
+  journal={Machine Intelligence Research},
+  volume={20},
+  number={5},
+  pages={656--665},
+  year={2023},
+  publisher={Springer}
 }
 
 @misc{wang2024yolov9,

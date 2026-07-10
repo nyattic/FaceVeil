@@ -120,8 +120,8 @@ namespace redactly
             QCoreApplication::translate("redactly::MainWindow", "Download Model"),
             QCoreApplication::translate("redactly::MainWindow",
                                         "The %1 model isn't on this computer yet.\n\n"
-                                        "Redactly can download it once (%2 MB) from Hugging Face. "
-                                        "The model is provided by InsightFace for non-commercial use. "
+                                        "Redactly can download it once (%2 MB) from OpenCV Zoo. "
+                                        "The YuNet model is provided under the MIT License. "
                                         "Your images are never uploaded.\n\nDownload now?")
                 .arg(model.fileName, sizeMb),
             QMessageBox::Yes | QMessageBox::No,
@@ -174,7 +174,7 @@ namespace redactly
             QMessageBox::warning(parent, QCoreApplication::translate("redactly::MainWindow", "Model Too Large"),
                                  QCoreApplication::translate("redactly::MainWindow",
                                                              "The selected ONNX file is larger than 512 MB. "
-                                                             "Choose a smaller SCRFD model."));
+                                                             "Choose a smaller YuNet model."));
             return false;
         }
         return true;
