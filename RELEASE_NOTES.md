@@ -1,9 +1,14 @@
+<!-- Keep each new release bilingual, using `## English` followed by `## 한국어`.
+     The app uses these headings to select release notes for its UI language. -->
+
 # Redactly 1.8.1
+
+## English
 
 Video processing is faster on macOS, and batch runs now protect existing
 output files and report incomplete results more clearly.
 
-## Improvements
+### Improvements
 - Face detection models now use static input dimensions so CoreML can run the
   whole graph instead of leaving unsupported work on the CPU
 - Video output uses Apple's VideoToolbox hardware H.264 encoder when available,
@@ -12,6 +17,29 @@ output files and report incomplete results more clearly.
   if a file would be overwritten or two inputs would produce the same path
 - Runs with failures, skipped files, or outputs containing no redacted regions
   now finish as **Review required** with a clearer summary
+- Very low detection thresholds no longer promote weak video detections into
+  thousands of false tracks that obscure unrelated parts of the frame
+- Update notifications now show the release notes in the app's selected
+  language, with a choice to update now or postpone
+
+## 한국어
+
+macOS에서 동영상 처리 속도가 향상되었으며, 이제 일괄 처리 시 기존 출력
+파일을 보호하고 완료되지 않은 작업 결과를 더욱 명확하게 알려줍니다.
+
+### 개선 사항
+- 얼굴 탐지 모델에 고정 입력 크기를 적용하여 CoreML이 일부 작업을 CPU에
+  맡기지 않고 전체 그래프를 실행할 수 있도록 개선했습니다
+- 가능한 경우 Apple의 VideoToolbox 하드웨어 H.264 인코더를 사용하며,
+  사용할 수 없으면 소프트웨어 인코딩으로 자동 전환됩니다
+- 처리 전에 생성할 모든 출력 경로를 확인하며, 기존 파일을 덮어쓰거나 두
+  입력 파일이 같은 경로에 저장될 경우 작업을 시작하지 않습니다
+- 실패하거나 건너뛴 파일 또는 가림 처리된 영역이 없는 출력물이 있으면
+  작업 상태를 **검토 필요**로 표시하고 더욱 명확한 요약을 제공합니다
+- 탐지 임계값이 매우 낮더라도 약한 동영상 탐지가 수천 개의 잘못된 트랙으로
+  승격되어 화면의 무관한 영역을 가리지 않도록 개선했습니다
+- 업데이트 알림에서 앱 설정 언어에 맞는 릴리스 노트를 표시하고, 바로
+  업데이트하거나 나중으로 미룰 수 있습니다
 
 ---
 

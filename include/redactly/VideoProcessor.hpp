@@ -47,6 +47,8 @@ namespace redactly
     using VideoProgressFn = std::function<void(int pass, qint64 frame, qint64 totalEstimate)>;
     using VideoDetectFn = std::function<FaceDetections(const cv::Mat &frame)>;
 
+    [[nodiscard]] float videoStrongScoreThreshold(float scoreThreshold);
+
     VideoProcessResult processVideo(const FfmpegTools &tools,
                                     const QString &sourcePath,
                                     const QString &destinationPath,

@@ -82,7 +82,10 @@ namespace redactly
             }
 
             const auto url = object.value("html_url").toString();
-            emit updateAvailable(tag, url.isEmpty() ? QString::fromLatin1(kReleasesPageUrl) : url);
+            const auto releaseNotes = object.value("body").toString().trimmed();
+            emit updateAvailable(tag,
+                                 url.isEmpty() ? QString::fromLatin1(kReleasesPageUrl) : url,
+                                 releaseNotes);
         });
     }
 }

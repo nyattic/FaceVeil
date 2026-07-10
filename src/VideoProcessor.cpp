@@ -86,6 +86,13 @@ namespace redactly
         }
     }
 
+    float videoStrongScoreThreshold(float scoreThreshold)
+    {
+        // A low user threshold may supply weak candidates to continue an existing track, but
+        // those candidates must not create and preserve thousands of false-positive tracks.
+        return std::max(0.35F, scoreThreshold - 0.1F);
+    }
+
     VideoProcessResult processVideo(const FfmpegTools &tools,
                                     const QString &sourcePath,
                                     const QString &destinationPath,
@@ -165,9 +172,7 @@ namespace redactly
         spdlog::info("Video scene cuts detected: {}", sceneCuts.frames().size());
 
         TrackerConfig trackerConfig = options.tracker;
-        trackerConfig.highScoreThreshold =
-                std::min(options.scoreThreshold,
-                         std::max(0.35F, options.scoreThreshold - 0.1F));
+        trackerConfig.highScoreThreshold = videoStrongScoreThreshold(options.scoreThreshold);
         auto tracks = buildBidirectionalTracks(frameDetections, trackerConfig, 0.5F, sceneCuts);
         TrackPostProcessConfig postProcess = options.postProcess;
         postProcess.strongScoreThreshold = trackerConfig.highScoreThreshold;

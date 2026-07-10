@@ -75,6 +75,47 @@ namespace redactly
         constexpr int kDefaultBlockSize = 14;
         constexpr double kDefaultPadding = 0.18;
 
+        QString releaseNotesSection(const QString &releaseNotes, const QString &language)
+        {
+            const QString wantedHeading = language == QStringLiteral("ko")
+                                              ? QStringLiteral("## 한국어")
+                                              : QStringLiteral("## English");
+            const QString fallbackHeading = QStringLiteral("## English");
+
+            const auto extractSection = [&releaseNotes](const QString &heading)
+            {
+                const QStringList lines = releaseNotes.split(QLatin1Char('\n'));
+                QStringList section;
+                bool collecting = false;
+                for (const QString &line: lines)
+                {
+                    const QString trimmed = line.trimmed();
+                    if (trimmed == QStringLiteral("## English") ||
+                        trimmed == QStringLiteral("## 한국어"))
+                    {
+                        if (collecting)
+                        {
+                            break;
+                        }
+                        collecting = trimmed == heading;
+                        continue;
+                    }
+                    if (collecting)
+                    {
+                        section.push_back(line);
+                    }
+                }
+                return section.join(QLatin1Char('\n')).trimmed();
+            };
+
+            QString localized = extractSection(wantedHeading);
+            if (localized.isEmpty() && wantedHeading != fallbackHeading)
+            {
+                localized = extractSection(fallbackHeading);
+            }
+            return localized.isEmpty() ? releaseNotes.trimmed() : localized;
+        }
+
         QString defaultOutputDirectory()
         {
             const auto pictures = QStandardPaths::writableLocation(QStandardPaths::PicturesLocation);
@@ -1384,7 +1425,8 @@ namespace redactly
 
         auto *checker = new UpdateChecker(QCoreApplication::applicationVersion(), this);
         connect(checker, &UpdateChecker::updateAvailable, this,
-                [this](const QString &latestVersion, const QString &releaseUrl)
+                [this](const QString &latestVersion, const QString &releaseUrl,
+                       const QString &releaseNotes)
                 {
                     if (updateLabel_ == nullptr)
                     {
@@ -1394,6 +1436,29 @@ namespace redactly
                     updateLabel_->setText(QStringLiteral("<a href=\"%1\">%2</a>")
                         .arg(releaseUrl.toHtmlEscaped(), text.toHtmlEscaped()));
                     updateLabel_->setVisible(true);
+
+                    QMessageBox message(this);
+                    message.setWindowTitle(tr("Update Available"));
+                    message.setIcon(QMessageBox::Information);
+                    message.setTextFormat(Qt::MarkdownText);
+                    message.setText(tr("Redactly %1 is available. What's new:")
+                                        .arg(latestVersion));
+                    const QString localizedNotes = releaseNotesSection(releaseNotes, language_);
+                    message.setInformativeText(
+                        localizedNotes.isEmpty()
+                            ? tr("No release notes were provided for this update.")
+                            : localizedNotes);
+
+                    auto *updateButton = message.addButton(tr("Update"), QMessageBox::AcceptRole);
+                    auto *laterButton = message.addButton(tr("Later"), QMessageBox::RejectRole);
+                    message.setDefaultButton(laterButton);
+                    message.setEscapeButton(laterButton);
+                    message.exec();
+
+                    if (message.clickedButton() == updateButton)
+                    {
+                        QDesktopServices::openUrl(QUrl(releaseUrl));
+                    }
                 });
         checker->check();
     }

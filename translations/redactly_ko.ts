@@ -290,6 +290,26 @@ On: copies EXIF/IPTC/XMP and the ICC color profile from the original, and preser
         <translation>새 버전 있음: %1</translation>
     </message>
     <message>
+        <source>Update Available</source>
+        <translation>업데이트 가능</translation>
+    </message>
+    <message>
+        <source>Redactly %1 is available. What's new:</source>
+        <translation>Redactly %1 버전을 사용할 수 있습니다. 주요 변경 사항:</translation>
+    </message>
+    <message>
+        <source>No release notes were provided for this update.</source>
+        <translation>이 업데이트에는 릴리스 노트가 제공되지 않았습니다.</translation>
+    </message>
+    <message>
+        <source>Update</source>
+        <translation>업데이트</translation>
+    </message>
+    <message>
+        <source>Later</source>
+        <translation>나중에</translation>
+    </message>
+    <message>
         <source>Faces</source>
         <translation>얼굴</translation>
     </message>
