@@ -105,7 +105,7 @@ Redactly가 open-image-models 프로젝트(MIT 라이선스)에서 한 번(%1 MB
     <message>
         <location filename="../src/MainWindow.cpp" line="475"/>
         <source>Load Custom Model</source>
-        <translation>사용자 모델 불러오기</translation>
+        <translation>커스텀 모델 불러오기</translation>
     </message>
     <message>
         <location filename="../src/MainWindow.cpp" line="476"/>
@@ -145,11 +145,11 @@ Continue?</source>
     </message>
     <message>
         <source>Anonymization style preview</source>
-        <translation>익명화 스타일 미리보기</translation>
+        <translation>처리 결과 미리보기</translation>
     </message>
     <message>
         <source>Sample of the current anonymization style and block size.</source>
-        <translation>현재 익명화 스타일과 블록 크기를 보여 주는 샘플입니다.</translation>
+        <translation>현재 처리 방식과 블록 크기를 미리 확인합니다.</translation>
     </message>
     <message>
         <source>Input images and folders</source>
@@ -175,7 +175,7 @@ Continue?</source>
     <message>
         <location filename="../src/MainWindow.cpp" line="572"/>
         <source>Choose speed vs. accuracy, or load a custom SCRFD ONNX file.</source>
-        <translation>속도와 정확도 중에서 고르거나, 사용자 SCRFD ONNX 파일을 불러오세요.</translation>
+        <translation>속도와 정확도 중에서 고르거나, 커스텀 SCRFD ONNX 파일을 불러오세요.</translation>
     </message>
     <message>
         <location filename="../src/MainWindow.cpp" line="582"/>
@@ -350,9 +350,9 @@ Mosaic = pixelation (block size below).
 Gaussian blur = strong smoothing scaled to face size.
 Solid fill = opaque black box, irreversible.
 Sticker = a friendly opaque smiley. Default: Mosaic</source>
-        <translation>감지된 얼굴을 가리는 방식입니다.
+        <translation>감지된 얼굴을 처리하는 방식입니다.
 모자이크 = 픽셀화(아래 블록 크기).
-가우시안 블러 = 얼굴 크기에 맞춘 강한 흐림.
+가우시안 블러 = 얼굴 크기에 맞춘 강한 블러.
 단색 채우기 = 불투명한 검은 상자, 복원 불가.
 스티커 = 친근한 불투명 웃는 얼굴. 기본값: 모자이크</translation>
     </message>
@@ -395,7 +395,7 @@ Covers ears, hairline, and chin that the detector may miss.
     <message>
         <location filename="../src/MainWindow.cpp" line="801"/>
         <source>Anonymization</source>
-        <translation>익명화 방식</translation>
+        <translation>처리 방식</translation>
     </message>
     <message>
         <location filename="../src/MainWindow.cpp" line="803"/>
@@ -490,7 +490,7 @@ Rounded = elliptical mask that follows the face and leaves corners untouched. De
         <location filename="../src/MainWindow.cpp" line="972"/>
         <location filename="../src/MainWindow.cpp" line="1212"/>
         <source>Custom — %1</source>
-        <translation>사용자 — %1</translation>
+        <translation>커스텀 — %1</translation>
     </message>
     <message>
         <location filename="../src/MainWindow.cpp" line="981"/>
@@ -671,7 +671,7 @@ Check these results before sharing them.</source>
     <message>
         <location filename="../src/ProcessorWorker.cpp" line="302"/>
         <source>Loading SCRFD model...</source>
-        <translation>SCRFD 모델 불러오는 중...</translation>
+        <translation>SCRFD 모델 로딩 중...</translation>
     </message>
     <message>
         <location filename="../src/ProcessorWorker.cpp" line="306"/>
@@ -680,7 +680,7 @@ Check these results before sharing them.</source>
     </message>
     <message>
         <source>Loading face detection model...</source>
-        <translation>얼굴 탐지 모델 불러오는 중...</translation>
+        <translation>얼굴 탐지 모델 로딩 중...</translation>
     </message>
     <message>
         <source>Reusing loaded face detection model.</source>
@@ -700,7 +700,7 @@ Check these results before sharing them.</source>
     </message>
     <message>
         <source>Loading license plate detection model...</source>
-        <translation>번호판 탐지 모델 불러오는 중...</translation>
+        <translation>번호판 탐지 모델 로딩 중...</translation>
     </message>
     <message>
         <source>Reusing loaded license plate detection model.</source>
@@ -727,7 +727,7 @@ Check these results before sharing them.</source>
     <message>
         <location filename="../src/ProcessorWorker.cpp" line="333"/>
         <source>Cannot create output directory: %1</source>
-        <translation>출력 디렉터리를 만들 수 없습니다: %1</translation>
+        <translation>출력 폴더를 만들 수 없습니다: %1</translation>
     </message>
     <message>
         <location filename="../src/ProcessorWorker.cpp" line="348"/>
@@ -773,7 +773,7 @@ Check these results before sharing them.</source>
     <message>
         <location filename="../src/ProcessorWorker.cpp" line="412"/>
         <source>Loading</source>
-        <translation>불러오는 중</translation>
+        <translation>로딩 중</translation>
     </message>
     <message>
         <location filename="../src/ProcessorWorker.cpp" line="417"/>
@@ -803,7 +803,7 @@ Check these results before sharing them.</source>
     <message>
         <location filename="../src/ProcessorWorker.cpp" line="483"/>
         <source>Review bridge unavailable; saved without review.</source>
-        <translation>검토 연결을 사용할 수 없어 검토 없이 저장했습니다.</translation>
+        <translation>검토 기능을 사용할 수 없어 검토 없이 저장했습니다.</translation>
     </message>
     <message>
         <location filename="../src/ProcessorWorker.cpp" line="514"/>
@@ -925,7 +925,7 @@ Check these results before sharing them.</source>
     </message>
     <message>
         <source>Loading face detection model for video...</source>
-        <translation>동영상용 얼굴 탐지 모델 로드 중...</translation>
+        <translation>동영상용 얼굴 탐지 모델 로딩 중...</translation>
     </message>
     <message>
         <source>GPU acceleration can't run the video face model at %1 px; using the CPU instead.</source>
@@ -966,7 +966,7 @@ Check these results before sharing them.</source>
     </message>
     <message>
         <source>Review image</source>
-        <translation>검토 이미지</translation>
+        <translation>이미지 검토</translation>
     </message>
     <message>
         <location filename="../src/ReviewDialog.cpp" line="399"/>
@@ -1007,7 +1007,7 @@ Images already saved are kept.</source>
     </message>
     <message>
         <source>Saves the image without anonymizing it.</source>
-        <translation>이미지를 익명화하지 않고 저장합니다.</translation>
+        <translation>이미지를 가리지 않고 저장합니다.</translation>
     </message>
     <message>
         <source>Copy Original?</source>
@@ -1019,7 +1019,7 @@ Images already saved are kept.</source>
 %1
 
 Continue?</source>
-        <translation>이 이미지는 익명화되지 않습니다.
+        <translation>이 이미지는 가림 처리되지 않습니다.
 
 %1
 
@@ -1078,7 +1078,7 @@ Continue?</source>
     </message>
     <message>
         <source>Write a local log file</source>
-        <translation>로컬 로그 파일 기록</translation>
+        <translation>로컬 로그 파일 저장</translation>
     </message>
     <message>
         <source>The log may include the names of files you process. Stored on this device only. Takes effect on the next launch.</source>
@@ -1134,11 +1134,11 @@ Continue?</source>
     </message>
     <message>
         <source>Could not read the bundled FFmpeg binary.</source>
-        <translation>내장 FFmpeg 실행 파일을 읽지 못했습니다.</translation>
+        <translation>번들 FFmpeg 바이너리를 읽지 못했습니다.</translation>
     </message>
     <message>
         <source>The bundled FFmpeg binary failed its integrity check.</source>
-        <translation>내장 FFmpeg 실행 파일이 무결성 검사를 통과하지 못했습니다.</translation>
+        <translation>번들 FFmpeg 바이너리가 무결성 검사를 통과하지 못했습니다.</translation>
     </message>
     <message>
         <source>Could not inspect the video (ffprobe did not respond).</source>
