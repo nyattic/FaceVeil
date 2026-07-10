@@ -30,6 +30,7 @@ namespace redactly
     struct TrackerConfig
     {
         float highScoreThreshold = 0.5F;
+        float newTrackScoreThreshold = 0.0F;
         float lowScoreThreshold = 0.1F;
         float iouThreshold = 0.3F;
         int maxFramesLost = 30;

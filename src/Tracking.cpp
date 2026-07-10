@@ -262,8 +262,14 @@ namespace redactly
             removeMatched(unmatchedTracks, match.trackIndex);
         }
 
+        const float newTrackThreshold =
+                std::max(config_.newTrackScoreThreshold, config_.highScoreThreshold);
         for (const size_t detectionIndex: highDetections)
         {
+            if (detections[detectionIndex].score < newTrackThreshold)
+            {
+                continue;
+            }
             ActiveTrack fresh;
             fresh.track.id = nextId_++;
             fresh.track.boxes.push_back({frame, detections[detectionIndex].box,

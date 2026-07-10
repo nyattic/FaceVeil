@@ -93,6 +93,11 @@ namespace redactly
         return std::max(0.35F, scoreThreshold - 0.1F);
     }
 
+    float videoNewTrackScoreThreshold(float scoreThreshold)
+    {
+        return std::clamp(scoreThreshold + 0.1F, 0.45F, 0.9F);
+    }
+
     VideoProcessResult processVideo(const FfmpegTools &tools,
                                     const QString &sourcePath,
                                     const QString &destinationPath,
@@ -173,6 +178,7 @@ namespace redactly
 
         TrackerConfig trackerConfig = options.tracker;
         trackerConfig.highScoreThreshold = videoStrongScoreThreshold(options.scoreThreshold);
+        trackerConfig.newTrackScoreThreshold = videoNewTrackScoreThreshold(options.scoreThreshold);
         auto tracks = buildBidirectionalTracks(frameDetections, trackerConfig, 0.5F, sceneCuts);
         TrackPostProcessConfig postProcess = options.postProcess;
         postProcess.strongScoreThreshold = trackerConfig.highScoreThreshold;

@@ -49,6 +49,8 @@ namespace redactly
 
     [[nodiscard]] float videoStrongScoreThreshold(float scoreThreshold);
 
+    [[nodiscard]] float videoNewTrackScoreThreshold(float scoreThreshold);
+
     VideoProcessResult processVideo(const FfmpegTools &tools,
                                     const QString &sourcePath,
                                     const QString &destinationPath,

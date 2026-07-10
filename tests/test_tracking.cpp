@@ -468,6 +468,20 @@ namespace
         assert(track.boxes.size() == 2);
     }
 
+    void testNewTrackThresholdBlocksWeakSeeds()
+    {
+        redactly::TrackerConfig config;
+        config.newTrackScoreThreshold = 0.7F;
+        const auto weakSeed = movingObjectSequence(10, 50.0F, 5.0F, 100.0F, 0.6F);
+        assert(redactly::buildTracks(weakSeed, config).empty());
+
+        auto strongSeed = movingObjectSequence(10, 50.0F, 5.0F, 100.0F, 0.6F);
+        strongSeed[0][0].score = 0.75F;
+        const auto tracks = redactly::buildTracks(strongSeed, config);
+        assert(tracks.size() == 1);
+        assert(tracks[0].boxes.size() == 10);
+    }
+
     void testSceneCutDetectorCommitsTrailingCandidate()
     {
         const auto sceneA = gradientFrame(true);
@@ -513,6 +527,7 @@ int main()
     testSizeJumpStartsNewTrackInsteadOfAssociating();
     testGradualGrowthKeepsOneTrack();
     testInterpolationSkipsAcrossSizeJump();
+    testNewTrackThresholdBlocksWeakSeeds();
     std::puts("tracking tests passed");
     return 0;
 }
