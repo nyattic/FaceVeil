@@ -12,6 +12,7 @@
 #include "redactly/SettingsDialog.hpp"
 #include "redactly/Theme.hpp"
 #include "redactly/UpdateChecker.hpp"
+#include "redactly/VideoReviewDialog.hpp"
 #include "redactly/VideoIo.hpp"
 
 #include <QApplication>
@@ -295,6 +296,8 @@ namespace redactly
 
     MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
     {
+        qRegisterMetaType<VideoReviewRequest>();
+        qRegisterMetaType<VideoReviewResult>();
         setWindowTitle("Redactly");
         setAcceptDrops(true);
         resize(920, 760);
@@ -477,15 +480,14 @@ namespace redactly
             addRetranslation([this]{ recursiveCheck_->setText(tr("Include subfolders")); });
             recursiveCheck_->setChecked(true);
             reviewCheck_ = new QCheckBox(card);
-            addRetranslation([this]{ reviewCheck_->setText(tr("Review each image")); });
+            addRetranslation([this]{ reviewCheck_->setText(tr("Review before saving")); });
             reviewCheck_->setChecked(false);
             addRetranslation([this]
                              {
                                  reviewCheck_->setToolTip(tr(
-                                     "Before saving each image, open a preview where you can:\n"
-                                     "  • Click a detected box to exclude it\n"
-                                     "  • Drag an empty area to add a box the model missed\n"
-                                     "Videos are processed without review."));
+                                     "Review detections before output:\n"
+                                     "  • Images: exclude boxes or add missed regions\n"
+                                     "  • Videos: scrub the track timeline and exclude false tracks"));
                              });
 
             connect(addFiles, &QPushButton::clicked, this, &MainWindow::chooseFiles);
@@ -1866,6 +1868,19 @@ namespace redactly
         ReviewDialog dialog(image, sourceName, detected, currentIndex, total,
                             preserveMetaCheck_ != nullptr && preserveMetaCheck_->isChecked(),
                             spec, this);
+        dialog.exec();
+        return dialog.result();
+    }
+
+    VideoReviewResult MainWindow::requestVideoReview(const VideoReviewRequest &request)
+    {
+        if (shuttingDown_)
+        {
+            VideoReviewResult cancelAll;
+            cancelAll.decision = VideoReviewDecision::CancelAll;
+            return cancelAll;
+        }
+        VideoReviewDialog dialog(request, this);
         dialog.exec();
         return dialog.result();
     }

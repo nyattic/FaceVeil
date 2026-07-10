@@ -303,6 +303,7 @@ int main(int argc, char **argv)
         options.paddingRatio = 0.0F;
         const QString scaledPath = tempDir.filePath("scaled.mp4");
         std::atomic<bool> cancelled{false};
+        bool reviewCalled = false;
         const auto result = redactly::processVideo(
             *tools, samplePath, scaledPath, *info, options,
             [](const cv::Mat &frame)
@@ -312,9 +313,17 @@ int main(int argc, char **argv)
                 detections.push_back({cv::Rect2f(40.0F, 30.0F, 80.0F, 60.0F), 0.9F});
                 return detections;
             },
-            cancelled);
+            cancelled, {},
+            [&](std::vector<redactly::Track> &tracks, qint64 frameCount)
+            {
+                reviewCalled = true;
+                assert(frameCount >= 55 && frameCount <= 65);
+                assert(tracks.size() == 1);
+                return true;
+            });
         assert(result.status == redactly::VideoProcessStatus::Completed);
         assert(result.trackCount == 1);
+        assert(reviewCalled);
 
         const auto scaledInfo = redactly::probeVideo(*tools, scaledPath, &probeError);
         assert(scaledInfo.has_value());
@@ -327,6 +336,29 @@ int main(int argc, char **argv)
         assert(inside[0] + inside[1] + inside[2] < 30.0);
         assert(outside[0] + outside[1] + outside[2] > 45.0);
         std::puts("analysis-to-native coordinate scaling: ok");
+    }
+
+    {
+        const QString reviewCancelledPath = tempDir.filePath("review-cancelled.mp4");
+        std::atomic<bool> cancelled{false};
+        bool reviewCalled = false;
+        const auto result = redactly::processVideo(
+            *tools, samplePath, reviewCancelledPath, *info, {},
+            [](const cv::Mat &)
+            {
+                return redactly::FaceDetections{
+                    {cv::Rect2f(40.0F, 30.0F, 80.0F, 60.0F), 0.9F}};
+            },
+            cancelled, {},
+            [&](std::vector<redactly::Track> &, qint64)
+            {
+                reviewCalled = true;
+                return false;
+            });
+        assert(reviewCalled);
+        assert(result.status == redactly::VideoProcessStatus::Cancelled);
+        assert(!QFile::exists(reviewCancelledPath));
+        std::puts("video review cancellation: ok");
     }
 
     {

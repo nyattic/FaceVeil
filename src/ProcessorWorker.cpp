@@ -12,6 +12,7 @@
 #include "redactly/ScrfdFaceDetector.hpp"
 #include "redactly/VideoIo.hpp"
 #include "redactly/VideoProcessor.hpp"
+#include "redactly/VideoReviewTypes.hpp"
 
 #include <QCoreApplication>
 #include <QDir>
@@ -27,6 +28,7 @@
 #include <algorithm>
 #include <exception>
 #include <filesystem>
+#include <limits>
 #include <random>
 #include <system_error>
 #include <thread>
@@ -777,10 +779,6 @@ namespace redactly
         ItemOutcome outcome;
         const QString fileName = pathToQString(item.sourcePath.filename());
 
-        if (reviewEnabled_)
-        {
-            outcome.logs.push_back(tr("Videos are processed without review: %1").arg(fileName));
-        }
         if (preserveMetadata_)
         {
             outcome.logs.push_back(
@@ -914,11 +912,62 @@ namespace redactly
             emit stageChanged(index, total, stage, fileName);
         };
 
+        VideoTrackReviewFn review;
+        if (reviewEnabled_ && reviewReceiver_)
+        {
+            review = [this, &tools, &info, &item, &fileName, index, total]
+                     (std::vector<Track> &tracks, qint64 frameCount)
+            {
+                emit stageChanged(index, total, tr("Reviewing video tracks"), fileName);
+                VideoReviewRequest request;
+                request.sourcePath = pathToQString(item.sourcePath);
+                request.ffmpegPath = tools->ffmpegPath;
+                request.sourceName = fileName;
+                request.frameSize = QSize(info->displayWidth(), info->displayHeight());
+                request.fps = info->fps();
+                request.frameCount = static_cast<int>(std::min<qint64>(
+                    frameCount, std::numeric_limits<int>::max()));
+                request.tracks.reserve(static_cast<qsizetype>(tracks.size()));
+                for (const auto &track: tracks)
+                {
+                    VideoReviewTrack reviewTrack;
+                    reviewTrack.id = track.id;
+                    reviewTrack.boxes.reserve(static_cast<qsizetype>(track.boxes.size()));
+                    for (const auto &box: track.boxes)
+                    {
+                        reviewTrack.boxes.push_back({
+                            box.frame,
+                            QRectF(box.box.x, box.box.y, box.box.width, box.box.height),
+                            box.interpolated});
+                    }
+                    request.tracks.push_back(std::move(reviewTrack));
+                }
+
+                VideoReviewResult reviewResult;
+                const bool invoked = QMetaObject::invokeMethod(
+                    reviewReceiver_.data(),
+                    "requestVideoReview",
+                    Qt::BlockingQueuedConnection,
+                    Q_RETURN_ARG(redactly::VideoReviewResult, reviewResult),
+                    Q_ARG(redactly::VideoReviewRequest, request));
+                if (!invoked || reviewResult.decision == VideoReviewDecision::CancelAll)
+                {
+                    cancelled_.store(true, std::memory_order_release);
+                    return false;
+                }
+                std::erase_if(tracks, [&](const Track &track)
+                {
+                    return reviewResult.excludedTrackIds.contains(track.id);
+                });
+                return true;
+            };
+        }
+
         const auto result = processVideo(*tools,
                                          pathToQString(item.sourcePath),
                                          pathToQString(destination),
                                          *info, options, detect,
-                                         cancelled_, progress);
+                                         cancelled_, progress, review);
         switch (result.status)
         {
             case VideoProcessStatus::Completed:

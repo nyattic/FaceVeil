@@ -229,19 +229,17 @@ Continue?</source>
     </message>
     <message>
         <location filename="../src/MainWindow.cpp" line="633"/>
-        <source>Review each image</source>
-        <translation>이미지마다 검토</translation>
+        <source>Review before saving</source>
+        <translation>저장 전 검토</translation>
     </message>
     <message>
         <location filename="../src/MainWindow.cpp" line="637"/>
-        <source>Before saving each image, open a preview where you can:
-  • Click a detected box to exclude it
-  • Drag an empty area to add a box the model missed
-Videos are processed without review.</source>
-        <translation>각 이미지를 저장하기 전에 미리보기를 열어:
-  • 감지된 상자를 클릭해 제외하거나
-  • 빈 영역을 드래그해 놓친 상자를 추가할 수 있습니다
-동영상은 검토 없이 처리됩니다.</translation>
+        <source>Review detections before output:
+  • Images: exclude boxes or add missed regions
+  • Videos: scrub the track timeline and exclude false tracks</source>
+        <translation>출력 전에 감지 결과를 검토합니다:
+  • 이미지: 상자를 제외하거나 놓친 영역 추가
+  • 동영상: 트랙 타임라인을 탐색하고 오탐 트랙 제외</translation>
     </message>
     <message>
         <location filename="../src/MainWindow.cpp" line="666"/>
@@ -890,8 +888,8 @@ Check these results before sharing them.</source>
         <translation>%1 처리 중 오류</translation>
     </message>
     <message>
-        <source>Videos are processed without review: %1</source>
-        <translation>동영상은 검토 없이 처리됩니다: %1</translation>
+        <source>Reviewing video tracks</source>
+        <translation>동영상 트랙 검토 중</translation>
     </message>
     <message>
         <source>Metadata preservation is not available for videos; metadata was removed: %1</source>
@@ -1213,6 +1211,56 @@ Continue?</source>
     <message>
         <source>The output file already exists.</source>
         <translation>출력 파일이 이미 존재합니다.</translation>
+    </message>
+</context>
+<context>
+    <name>redactly::VideoReviewCanvas</name>
+    <message>
+        <source>Could not load this frame preview.</source>
+        <translation>이 프레임의 미리보기를 불러오지 못했습니다.</translation>
+    </message>
+    <message>
+        <source>Track %1</source>
+        <translation>트랙 %1</translation>
+    </message>
+</context>
+<context>
+    <name>redactly::VideoReviewDialog</name>
+    <message>
+        <source>Review video tracks — %1</source>
+        <translation>동영상 트랙 검토 — %1</translation>
+    </message>
+    <message>
+        <source>Scrub the timeline and uncheck false detections. Changes apply to the entire track before the video is encoded.</source>
+        <translation>타임라인을 탐색하고 오탐을 선택 해제하세요. 변경 사항은 동영상 인코딩 전에 트랙 전체에 적용됩니다.</translation>
+    </message>
+    <message>
+        <source>Track %1  ·  %2–%3</source>
+        <translation>트랙 %1  ·  %2–%3</translation>
+    </message>
+    <message>
+        <source>Include all</source>
+        <translation>모두 포함</translation>
+    </message>
+    <message>
+        <source>Exclude all</source>
+        <translation>모두 제외</translation>
+    </message>
+    <message>
+        <source>Cancel all</source>
+        <translation>전체 취소</translation>
+    </message>
+    <message>
+        <source>Encode video</source>
+        <translation>동영상 인코딩</translation>
+    </message>
+    <message>
+        <source>%1 / %2</source>
+        <translation>%1 / %2</translation>
+    </message>
+    <message>
+        <source>%1 of %2 tracks included</source>
+        <translation>트랙 %2개 중 %1개 포함</translation>
     </message>
 </context>
 <context>

@@ -29,7 +29,7 @@ Faces and plates can be hidden with pixelation, Gaussian blur, solid fill, or a
 friendly built-in smiley sticker. Sticker rendering is bundled and consistent
 across platforms; it does not use the operating system's emoji font.
 
-Originals are never modified. Enable **Review each image** to inspect detections before saving, exclude false positives, add missed faces, leave an image unsaved, or explicitly copy the original.
+Originals are never modified. Enable **Review before saving** to inspect image detections, add missed regions, or review video tracks on a timeline before encoding. False video tracks can be excluded from the entire output with one click.
 
 Redactly refuses to start if two inputs would write to the same output path or if any planned output already exists, so results are never silently overwritten. Move or rename existing results before running the same batch again.
 
@@ -39,7 +39,7 @@ Supported inputs: `.jpg` `.jpeg` `.png` `.bmp` `.tif` `.tiff` `.webp` images, an
 
 Detection runs on the GPU where available — CoreML on macOS, DirectML on Windows (bundled with the release and accelerating NVIDIA, AMD, and Intel GPUs alike) — with automatic CPU fallback and a Settings toggle (on by default).
 
-Videos are processed in two passes — detection with bidirectional tracking, then encoding — so faces stay covered through motion blur and brief occlusions. Encoding uses the GPU's hardware encoder when one works — NVENC, AMF, or Quick Sync on Windows, VideoToolbox on macOS — falling back to CPU x264 otherwise or when GPU acceleration is off in Settings. Output is always H.264 MP4 with the original audio (re-encoded to AAC only when the source codec doesn't fit MP4), container metadata removed, and rotation baked into the pixels. Variable frame rate input is converted to a constant frame rate; 10-bit/HDR input is rejected rather than silently degraded. Video processing uses an FFmpeg bundled next to the app when present, otherwise an FFmpeg found on `PATH`. Videos are processed without the review step, and the video quality preset lives in Settings.
+Videos are processed in two passes — detection with bidirectional tracking, then encoding — so faces stay covered through motion blur and brief occlusions. When review is enabled, Redactly pauses between the passes to show a track timeline. Encoding uses the GPU's hardware encoder when one works — NVENC, AMF, or Quick Sync on Windows, VideoToolbox on macOS — falling back to CPU x264 otherwise or when GPU acceleration is off in Settings. Output is always H.264 MP4 with the original audio (re-encoded to AAC only when the source codec doesn't fit MP4), container metadata removed, and rotation baked into the pixels. Variable frame rate input is converted to a constant frame rate; 10-bit/HDR input is rejected rather than silently degraded. Video processing uses an FFmpeg bundled next to the app when present, otherwise an FFmpeg found on `PATH`. The video quality preset lives in Settings.
 
 ## Build from source
 

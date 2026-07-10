@@ -9,6 +9,7 @@
 
 #include <atomic>
 #include <functional>
+#include <vector>
 
 namespace redactly
 {
@@ -46,6 +47,7 @@ namespace redactly
 
     using VideoProgressFn = std::function<void(int pass, qint64 frame, qint64 totalEstimate)>;
     using VideoDetectFn = std::function<FaceDetections(const cv::Mat &frame)>;
+    using VideoTrackReviewFn = std::function<bool(std::vector<Track> &tracks, qint64 frameCount)>;
 
     [[nodiscard]] float videoStrongScoreThreshold(float scoreThreshold);
 
@@ -56,5 +58,6 @@ namespace redactly
                                     const VideoProcessOptions &options,
                                     const VideoDetectFn &detect,
                                     const std::atomic<bool> &cancelled,
-                                    const VideoProgressFn &progress = {});
+                                    const VideoProgressFn &progress = {},
+                                    const VideoTrackReviewFn &review = {});
 }

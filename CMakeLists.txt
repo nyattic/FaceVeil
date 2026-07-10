@@ -124,6 +124,7 @@ add_library(redactly_core STATIC
     include/redactly/Tracking.hpp
     include/redactly/VideoIo.hpp
     include/redactly/VideoProcessor.hpp
+    include/redactly/VideoReviewTypes.hpp
 )
 
 target_include_directories(redactly_core PUBLIC include)
@@ -153,6 +154,7 @@ qt_add_executable(Redactly ${REDACTLY_APP_OPTIONS}
     src/SettingsDialog.cpp
     src/Theme.cpp
     src/UpdateChecker.cpp
+    src/VideoReviewDialog.cpp
     include/redactly/MainWindow.hpp
     include/redactly/ModelCatalog.hpp
     include/redactly/ModelDownloader.hpp
@@ -160,6 +162,7 @@ qt_add_executable(Redactly ${REDACTLY_APP_OPTIONS}
     include/redactly/SettingsDialog.hpp
     include/redactly/Theme.hpp
     include/redactly/UpdateChecker.hpp
+    include/redactly/VideoReviewDialog.hpp
     ${REDACTLY_APP_RESOURCES}
 )
 

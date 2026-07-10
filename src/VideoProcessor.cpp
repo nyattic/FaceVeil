@@ -100,7 +100,8 @@ namespace redactly
                                     const VideoProcessOptions &options,
                                     const VideoDetectFn &detect,
                                     const std::atomic<bool> &cancelled,
-                                    const VideoProgressFn &progress)
+                                    const VideoProgressFn &progress,
+                                    const VideoTrackReviewFn &review)
     {
         VideoProcessResult result;
 
@@ -178,9 +179,20 @@ namespace redactly
         postProcess.strongScoreThreshold = trackerConfig.highScoreThreshold;
         postProcessTracks(tracks, postProcess, static_cast<int>(frameCount), sceneCuts);
         scaleTracksToNative(tracks, scaleX, scaleY);
-        result.trackCount = static_cast<int>(tracks.size());
         frameDetections.clear();
         frameDetections.shrink_to_fit();
+
+        if (review && !review(tracks, frameCount))
+        {
+            result.status = VideoProcessStatus::Cancelled;
+            return result;
+        }
+        if (cancelled.load(std::memory_order_acquire))
+        {
+            result.status = VideoProcessStatus::Cancelled;
+            return result;
+        }
+        result.trackCount = static_cast<int>(tracks.size());
 
         VideoFrameReader reader;
         if (!reader.open(tools, sourcePath, info))

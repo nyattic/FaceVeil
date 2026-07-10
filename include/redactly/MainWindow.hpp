@@ -1,5 +1,7 @@
 #pragma once
 
+#include "redactly/VideoReviewTypes.hpp"
+
 #include "redactly/ProcessorWorker.hpp"
 #include "redactly/ReviewTypes.hpp"
 #include "redactly/Theme.hpp"
@@ -48,6 +50,9 @@ namespace redactly
                                                          int currentIndex,
                                                          int total,
                                                          double previewScale);
+
+        Q_INVOKABLE redactly::VideoReviewResult requestVideoReview(
+            const redactly::VideoReviewRequest &request);
 
     protected:
         void dragEnterEvent(QDragEnterEvent *event) override;
