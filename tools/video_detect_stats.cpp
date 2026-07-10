@@ -11,6 +11,7 @@
 #include <opencv2/core.hpp>
 
 #include <algorithm>
+#include <atomic>
 #include <cstdio>
 #include <string>
 #include <vector>
@@ -65,9 +66,15 @@ int main(int argc, char **argv)
     const std::string modelPath = argv[1];
     const QString videoPath = QString::fromLocal8Bit(argv[2]);
     const float userThreshold = argc > 3 ? std::stof(argv[3]) : 0.5F;
+    QString renderPath;
     std::vector<int> keyFrames;
     for (int i = 4; i < argc; ++i)
     {
+        if (std::string(argv[i]) == "--render" && i + 1 < argc)
+        {
+            renderPath = QString::fromLocal8Bit(argv[++i]);
+            continue;
+        }
         keyFrames.push_back(std::stoi(argv[i]));
     }
 
@@ -87,6 +94,35 @@ int main(int argc, char **argv)
 
     redactly::VideoProcessOptions options;
     options.scoreThreshold = userThreshold;
+
+    if (!renderPath.isEmpty())
+    {
+        options.method = redactly::AnonymizationMethod::Blur;
+        options.shape = redactly::MaskShape::Ellipse;
+        options.softEdges = true;
+        options.paddingRatio = 0.18F;
+        redactly::YunetFaceDetector detector(modelPath, 960, false);
+        const float detectionThreshold =
+                std::min(options.tracker.lowScoreThreshold, options.scoreThreshold);
+        std::atomic<bool> cancelled{false};
+        const auto result = redactly::processVideo(
+                *tools, videoPath, renderPath, *info, options,
+                [&](const cv::Mat &frame)
+                {
+                    return detector.detect(frame, detectionThreshold, options.nmsThreshold);
+                },
+                cancelled, nullptr);
+        if (result.status != redactly::VideoProcessStatus::Completed)
+        {
+            std::fprintf(stderr, "render failed: %s\n", result.error.toUtf8().constData());
+            return 1;
+        }
+        std::printf("rendered %s tracks=%d frames=%lld encoder=%s\n",
+                    renderPath.toUtf8().constData(), result.trackCount,
+                    static_cast<long long>(result.frameCount),
+                    result.encoderName.toUtf8().constData());
+        return 0;
+    }
 
     redactly::VideoFrameReader reader;
     if (!reader.open(*tools, videoPath, *info, options.analysisLongEdge))
