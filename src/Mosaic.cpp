@@ -82,7 +82,7 @@ namespace redactly
             roi.setTo(cv::Scalar(0, 0, 0));
         }
 
-        constexpr float kFeatherRatio = 0.3F;
+        constexpr float kFeatherRatio = 0.15F;
         constexpr int kMinFeather = 4;
         constexpr int kSizeQuantum = 4;
 
