@@ -194,21 +194,18 @@ else()
     message(WARNING "Qt LinguistTools not found; building without embedded translations (English only).")
 endif()
 
-# ── Security hardening ────────────────────────────────────────────
-# Opt-in compile/link flags that catch common memory-safety issues at runtime
-# and make exploitation harder. All of these are widely supported and cheap.
 function(redactly_harden target)
     if(MSVC)
         target_compile_options(${target} PRIVATE
-            /W4              # High warning level
-            /guard:cf        # Control Flow Guard
-            /GS              # Buffer security checks
-            /sdl             # Additional security checks
+            /W4
+            /guard:cf
+            /GS
+            /sdl
         )
         target_link_options(${target} PRIVATE
             /guard:cf
-            /DYNAMICBASE     # ASLR
-            /NXCOMPAT        # DEP
+            /DYNAMICBASE
+            /NXCOMPAT
             /HIGHENTROPYVA
         )
     else()
@@ -219,7 +216,6 @@ function(redactly_harden target)
             -fno-strict-aliasing
             $<$<NOT:$<CONFIG:Debug>>:-D_FORTIFY_SOURCE=2>
         )
-        # PIE: required by most distro hardening policies and by macOS anyway.
         set_target_properties(${target} PROPERTIES POSITION_INDEPENDENT_CODE ON)
         if(NOT APPLE)
             target_link_options(${target} PRIVATE
@@ -266,8 +262,6 @@ if(BUILD_TESTING)
     add_executable(redactly_tests
         tests/test_core.cpp
     )
-    # The tests use assert() as their check mechanism, so keep assertions live
-    # even in Release/RelWithDebInfo builds (which would otherwise define NDEBUG).
     if(MSVC)
         target_compile_options(redactly_tests PRIVATE /UNDEBUG)
     else()
