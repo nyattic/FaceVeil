@@ -9,6 +9,9 @@ namespace redactly
         None,
         CoreML,
         DirectML,
+        CUDA,
+        MIGraphX,
+        ROCm,
     };
 
     [[nodiscard]] const char *ortAcceleratorName(OrtAccelerator accelerator);

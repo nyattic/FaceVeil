@@ -37,13 +37,13 @@ When every item is processed and redacted successfully, the run finishes as **Do
 
 Supported inputs: `.jpg` `.jpeg` `.png` `.bmp` `.tif` `.tiff` `.webp` images, and `.mp4` `.mov` `.m4v` videos (H.264/HEVC, 8-bit SDR). Video support is currently in **beta** — check the output before sharing it. On Linux the video pipeline is covered by automated tests but has not been manually tested yet.
 
-Detection runs on the GPU where available — CoreML on macOS, DirectML on Windows (bundled with the release and accelerating NVIDIA, AMD, and Intel GPUs alike) — with automatic CPU fallback and a Settings toggle (on by default).
+Detection runs on the GPU where available — CoreML on macOS, DirectML on Windows (bundled with the release and accelerating NVIDIA, AMD, and Intel GPUs alike), CUDA on NVIDIA Linux systems, and MIGraphX on supported AMD Linux systems — with automatic CPU fallback and a Settings toggle (on by default). Linux GPU detection requires a source build linked against a GPU-enabled ONNX Runtime; the current AppImage uses CPU inference.
 
 Videos are processed in two passes — detection with bidirectional tracking, then encoding — so faces stay covered through motion blur and brief occlusions. When review is enabled, Redactly pauses between the passes to show a track timeline. Encoding uses the GPU's hardware encoder when one works — NVENC or Quick Sync on Windows and Linux, VideoToolbox on macOS — falling back to CPU x264/x265 otherwise or when GPU acceleration is off in Settings. Output is an H.264 (default) or HEVC MP4, selectable in Settings, with the original audio (re-encoded to AAC only when the source codec doesn't fit MP4), container metadata removed, and rotation baked into the pixels. Variable frame rate input is converted to a constant frame rate; 10-bit/HDR input is rejected rather than silently degraded. Video processing uses an FFmpeg bundled next to the app when present, otherwise an FFmpeg found on `PATH`. The video quality preset lives in Settings.
 
 ## Build from source
 
-Requires CMake 3.24+, a C++20 compiler, Qt 6 available to CMake (with the Linguist tools for UI translations; Qt Svg is optional and gives a crisp settings icon, falling back to a glyph without it), OpenCV 4, ONNX Runtime, spdlog, and Exiv2 (optional, for metadata preservation). FFmpeg is not a build dependency, but video processing needs `ffmpeg` and `ffprobe` at runtime (bundled next to the app, or on `PATH`). The detection models (SCRFD for faces, YOLOv9 for license plates) are not build dependencies — the app downloads them on first use, or you can pre-place them (see below).
+Requires CMake 3.24+, a C++20 compiler, Qt 6.11.1+ available to CMake (with the Linguist tools for UI translations; Qt Svg is optional and gives a crisp settings icon, falling back to a glyph without it), OpenCV 5.0.0+, ONNX Runtime, spdlog, and Exiv2 (optional, for metadata preservation). FFmpeg is not a build dependency, but video processing needs `ffmpeg` and `ffprobe` at runtime (bundled next to the app, or on `PATH`). The detection models (SCRFD for faces, YOLOv9 for license plates) are not build dependencies — the app downloads them on first use, or you can pre-place them (see below).
 
 The built-in models are **not bundled** and **not committed** to this repository. The app downloads them on first use (with an integrity check) and caches them under the platform data directory. To pre-place them for offline use, drop them in `models/`:
 
@@ -76,8 +76,8 @@ The application still builds when Qt Linguist Tools are unavailable, but only th
 ```powershell
 cmake -S . -B build-windows -G Ninja `
   -DCMAKE_BUILD_TYPE=Release `
-  -DCMAKE_PREFIX_PATH="C:\Qt\6.11.0\msvc2022_64;C:\opencv\build" `
-  -DONNXRUNTIME_ROOT="C:\onnxruntime-win-x64-1.20.1"
+  -DCMAKE_PREFIX_PATH="C:\Qt\6.11.1\msvc2022_64;C:\opencv\build" `
+  -DONNXRUNTIME_ROOT="C:\onnxruntime-directml-1.24.4"
 cmake --build build-windows --config Release
 ```
 
@@ -87,12 +87,14 @@ Any ONNX Runtime build works for development, but official Windows releases use 
 
 ### Linux
 
-Install the build dependencies (Debian/Ubuntu example):
+The Linux CI and AppImage release baseline is Ubuntu 26.04 with Qt 6.11.1, OpenCV 5.0.0, and ONNX Runtime 1.27.1. Install the system build dependencies with:
 
 ```bash
 sudo apt install cmake ninja-build build-essential pkg-config \
-  qt6-base-dev qt6-tools-dev libqt6svg6-dev libopencv-dev libspdlog-dev libexiv2-dev
+  libjpeg-dev libpng-dev libtiff-dev libwebp-dev libspdlog-dev libexiv2-dev
 ```
+
+Install Qt 6.11.1 and OpenCV 5.0.0 separately when the distribution packages are older. The pinned source-build configuration used for releases is in [`.github/workflows/release.yml`](.github/workflows/release.yml).
 
 ONNX Runtime is detected via `pkg-config libonnxruntime` when available; otherwise point CMake at an ONNX Runtime release:
 
@@ -102,6 +104,27 @@ cmake -S . -B build -DCMAKE_BUILD_TYPE=Release \
 cmake --build build
 ./build/Redactly
 ```
+
+On Arch Linux, install the CPU development environment with:
+
+```bash
+yay -S --needed base-devel cmake ninja pkgconf qt6-base qt6-tools qt6-svg \
+  opencv onnxruntime-cpu spdlog exiv2 ffmpeg
+```
+
+For NVIDIA GPU inference on AVX2-capable systems, replace `onnxruntime-cpu` with `onnxruntime-opt-cuda`:
+
+```bash
+yay -S --needed onnxruntime-opt-cuda
+```
+
+For supported AMD GPUs, use the MIGraphX-enabled ROCm package instead:
+
+```bash
+yay -S --needed onnxruntime-rocm
+```
+
+The ONNX Runtime variants conflict, so install only one. Reconfigure the CMake build directory after changing variants. Redactly selects CUDA first, then MIGraphX, accepts the legacy ROCm execution provider from ONNX Runtime versions before 1.23, and falls back to CPU when provider initialization or model warmup fails.
 
 ### Tests
 

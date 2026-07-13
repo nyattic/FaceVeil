@@ -3,6 +3,7 @@
 #include "redactly/ImageScanner.hpp"
 #include "redactly/Mosaic.hpp"
 #include "redactly/OnnxGraphPatch.hpp"
+#include "redactly/OrtAcceleration.hpp"
 #include "redactly/OutputPlan.hpp"
 #include "redactly/PathSafety.hpp"
 #include "redactly/ProcessorWorker.hpp"
@@ -31,6 +32,16 @@
 
 namespace
 {
+    void testAccelerationBackendNames()
+    {
+        assert(std::string(redactly::ortAcceleratorName(redactly::OrtAccelerator::None)) == "CPU");
+        assert(std::string(redactly::ortAcceleratorName(redactly::OrtAccelerator::CoreML)) == "CoreML");
+        assert(std::string(redactly::ortAcceleratorName(redactly::OrtAccelerator::DirectML)) == "DirectML");
+        assert(std::string(redactly::ortAcceleratorName(redactly::OrtAccelerator::CUDA)) == "CUDA");
+        assert(std::string(redactly::ortAcceleratorName(redactly::OrtAccelerator::MIGraphX)) == "MIGraphX");
+        assert(std::string(redactly::ortAcceleratorName(redactly::OrtAccelerator::ROCm)) == "ROCm");
+    }
+
     void writeBytes(const QString &path)
     {
         QFile file(path);
@@ -536,6 +547,7 @@ namespace
 
 int main()
 {
+    testAccelerationBackendNames();
     testSupportedImageExtensions();
     testScanImagesRecursesAndDeduplicates();
     testOutputPlanRejectsExistingAndDuplicateDestinations();

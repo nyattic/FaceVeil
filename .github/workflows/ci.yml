@@ -16,15 +16,21 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  OPENCV_SHA256: bff38466091c313dac21a0b73eea8278316a89c1d434c6f0b10697e087670168
-  ONNXRUNTIME_DIRECTML_SHA256: 6763468507b7cfc777b1334b3e174c11a540ddacb7bd4354bc2e0ec89e56eec2
-  DIRECTML_SHA256: 9f07482559087088a4dba4ae76eeeee1fad3f7077a92ccfbdb439c6bc2964c09
-  ONNXRUNTIME_LINUX_SHA256: 67db4dc1561f1e3fd42e619575c82c601ef89849afc7ea85a003abbac1a1a105
+  QT_VERSION: 6.11.1
+  OPENCV_VERSION: 5.0.0
+  OPENCV_SOURCE_SHA256: b0528f5a1d379d59d4701cb28c36e22214cc51cf64594e5b56f2d3e6c0233095
+  OPENCV_WINDOWS_SHA256: 9c6c1fcea58acdf06edba13148b2246e00c2658143fa51e61ecd370db8c39f63
+  ONNXRUNTIME_VERSION: 1.27.1
+  ONNXRUNTIME_LINUX_SHA256: 25b1ef1fea1acd210d63f8f24dc870ad6e077795ce1f54876252c6d3803c15af
+  ONNXRUNTIME_DIRECTML_VERSION: 1.24.4
+  ONNXRUNTIME_DIRECTML_SHA256: 57e9f11b73437bef7a309496135d4c1f96b1a8e9ddba60013fa27bfc1d788681
+  DIRECTML_VERSION: 1.15.4
+  DIRECTML_SHA256: 4e7cb7ddce8cf837a7a75dc029209b520ca0101470fcdf275c1f49736a3615b9
 
 jobs:
   macos:
     name: Build & test macOS
-    runs-on: macos-15
+    runs-on: macos-26
     env:
       CMAKE_PREFIX_PATH: /opt/homebrew
       PKG_CONFIG_PATH: /opt/homebrew/lib/pkgconfig
@@ -46,7 +52,7 @@ jobs:
 
   linux:
     name: Build & test Linux
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-26.04
     steps:
       - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
 
@@ -55,13 +61,39 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends \
             cmake ninja-build build-essential pkg-config ffmpeg \
-            libopencv-dev libspdlog-dev libexiv2-dev \
+            libjpeg-dev libpng-dev libtiff-dev libwebp-dev \
+            libspdlog-dev libexiv2-dev \
             libgl1-mesa-dev libxcb-cursor0 libxcb-xinerama0 libxkbcommon-x11-0
+
+      - name: Install OpenCV
+        run: |
+          curl -fL "https://github.com/opencv/opencv/archive/refs/tags/${OPENCV_VERSION}.tar.gz" -o opencv.tar.gz
+          echo "${OPENCV_SOURCE_SHA256}  opencv.tar.gz" | sha256sum -c -
+          tar -xzf opencv.tar.gz
+          cmake -S "opencv-${OPENCV_VERSION}" -B opencv-build -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_INSTALL_PREFIX="$HOME/opencv" \
+            -DCMAKE_INSTALL_LIBDIR=lib \
+            -DBUILD_LIST=core,imgcodecs,imgproc \
+            -DBUILD_SHARED_LIBS=ON \
+            -DBUILD_TESTS=OFF \
+            -DBUILD_PERF_TESTS=OFF \
+            -DBUILD_EXAMPLES=OFF \
+            -DBUILD_opencv_apps=OFF \
+            -DBUILD_JAVA=OFF \
+            -DBUILD_opencv_python3=OFF \
+            -DWITH_FFMPEG=OFF \
+            -DWITH_GSTREAMER=OFF \
+            -DWITH_QT=OFF
+          cmake --build opencv-build --parallel
+          cmake --install opencv-build
+          echo "OpenCV_DIR=$HOME/opencv/lib/cmake/opencv5" >> "$GITHUB_ENV"
+          echo "LD_LIBRARY_PATH=$HOME/opencv/lib" >> "$GITHUB_ENV"
 
       - name: Install Qt
         uses: jurplel/install-qt-action@48d3ad6db93f3627c8ee7a0454bc6f3744f7e730 # v4
         with:
-          version: '6.8.1'
+          version: '${{ env.QT_VERSION }}'
           host: linux
           target: desktop
           arch: linux_gcc_64
@@ -69,11 +101,11 @@ jobs:
 
       - name: Install ONNX Runtime
         run: |
-          curl -fL "https://github.com/microsoft/onnxruntime/releases/download/v1.20.1/onnxruntime-linux-x64-1.20.1.tgz" -o onnx.tgz
+          curl -fL "https://github.com/microsoft/onnxruntime/releases/download/v${ONNXRUNTIME_VERSION}/onnxruntime-linux-x64-${ONNXRUNTIME_VERSION}.tgz" -o onnx.tgz
           echo "${ONNXRUNTIME_LINUX_SHA256}  onnx.tgz" | sha256sum -c -
           mkdir -p "$HOME/onnx"
           tar -xzf onnx.tgz -C "$HOME/onnx"
-          echo "ONNXRUNTIME_ROOT=$HOME/onnx/onnxruntime-linux-x64-1.20.1" >> "$GITHUB_ENV"
+          echo "ONNXRUNTIME_ROOT=$HOME/onnx/onnxruntime-linux-x64-${ONNXRUNTIME_VERSION}" >> "$GITHUB_ENV"
 
       - name: Configure
         run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
@@ -86,14 +118,14 @@ jobs:
 
   windows:
     name: Build & test Windows
-    runs-on: windows-latest
+    runs-on: windows-2025
     steps:
       - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
 
       - name: Install Qt
         uses: jurplel/install-qt-action@48d3ad6db93f3627c8ee7a0454bc6f3744f7e730 # v4
         with:
-          version: '6.8.1'
+          version: '${{ env.QT_VERSION }}'
           host: windows
           target: desktop
           arch: win64_msvc2022_64
@@ -107,19 +139,23 @@ jobs:
       - name: Install OpenCV
         shell: pwsh
         run: |
-          Invoke-WebRequest -Uri "https://github.com/opencv/opencv/releases/download/4.10.0/opencv-4.10.0-windows.exe" -OutFile opencv.exe
+          Invoke-WebRequest -Uri "https://github.com/opencv/opencv/releases/download/$env:OPENCV_VERSION/opencv-$env:OPENCV_VERSION-windows.exe" -OutFile opencv.exe
           $h = (Get-FileHash -Algorithm SHA256 opencv.exe).Hash.ToLower()
-          if ($h -ne "$env:OPENCV_SHA256") { throw "OpenCV SHA256 mismatch: got $h" }
+          if ($h -ne "$env:OPENCV_WINDOWS_SHA256") { throw "OpenCV SHA256 mismatch: got $h" }
           Start-Process -FilePath .\opencv.exe -ArgumentList '-o"C:\opencv" -y' -Wait
-          "OpenCV_DIR=C:\opencv\opencv\build\x64\vc16\lib" | Out-File -FilePath $env:GITHUB_ENV -Append
+          $config = Get-ChildItem C:\opencv\opencv\build -Recurse -Filter OpenCVConfig.cmake -File |
+            Where-Object { $_.FullName -match '\\x64\\vc[0-9]+\\lib\\OpenCVConfig\.cmake$' } |
+            Select-Object -First 1
+          if (-not $config) { throw "OpenCVConfig.cmake was not found in the extracted package" }
+          "OpenCV_DIR=$($config.DirectoryName)" | Out-File -FilePath $env:GITHUB_ENV -Append
 
       - name: Install ONNX Runtime (DirectML)
         shell: pwsh
         run: |
-          Invoke-WebRequest -Uri "https://api.nuget.org/v3-flatcontainer/microsoft.ml.onnxruntime.directml/1.20.1/microsoft.ml.onnxruntime.directml.1.20.1.nupkg" -OutFile onnx-dml.zip
+          Invoke-WebRequest -Uri "https://api.nuget.org/v3-flatcontainer/microsoft.ml.onnxruntime.directml/$env:ONNXRUNTIME_DIRECTML_VERSION/microsoft.ml.onnxruntime.directml.$env:ONNXRUNTIME_DIRECTML_VERSION.nupkg" -OutFile onnx-dml.zip
           $h = (Get-FileHash -Algorithm SHA256 onnx-dml.zip).Hash.ToLower()
           if ($h -ne "$env:ONNXRUNTIME_DIRECTML_SHA256") { throw "ONNX Runtime DirectML SHA256 mismatch: got $h" }
-          Invoke-WebRequest -Uri "https://api.nuget.org/v3-flatcontainer/microsoft.ai.directml/1.15.2/microsoft.ai.directml.1.15.2.nupkg" -OutFile directml.zip
+          Invoke-WebRequest -Uri "https://api.nuget.org/v3-flatcontainer/microsoft.ai.directml/$env:DIRECTML_VERSION/microsoft.ai.directml.$env:DIRECTML_VERSION.nupkg" -OutFile directml.zip
           $h = (Get-FileHash -Algorithm SHA256 directml.zip).Hash.ToLower()
           if ($h -ne "$env:DIRECTML_SHA256") { throw "DirectML SHA256 mismatch: got $h" }
           Expand-Archive -Path onnx-dml.zip -DestinationPath C:\onnx-dml-pkg -Force
@@ -150,5 +186,5 @@ jobs:
       - name: Test
         shell: pwsh
         run: |
-          $env:PATH = "C:\opencv\opencv\build\x64\vc16\bin;$env:PATH"
+          $env:PATH = "$(Resolve-Path (Join-Path $env:OpenCV_DIR '..\bin'));$env:PATH"
           ctest --test-dir build --output-on-failure

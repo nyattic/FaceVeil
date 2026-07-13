@@ -206,8 +206,8 @@ if ($Exiv2Root) {
     }
 }
 
-$FfmpegZipUrl = "https://www.gyan.dev/ffmpeg/builds/packages/ffmpeg-8.0.1-essentials_build.zip"
-$FfmpegZipSha256 = "e2aaeaa0fdbc397d4794828086424d4aaa2102cef1fb6874f6ffd29c0b88b673"
+$FfmpegZipUrl = "https://www.gyan.dev/ffmpeg/builds/packages/ffmpeg-8.1.2-essentials_build.zip"
+$FfmpegZipSha256 = "db580001caa24ac104c8cb856cd113a87b0a443f7bdf47d8c12b1d740584a2ec"
 $ffmpegZip = Join-Path $BuildDir "ffmpeg-win64.zip"
 if (-not (Test-Path $ffmpegZip)) {
     Write-Host "Downloading FFmpeg: $FfmpegZipUrl"
@@ -232,7 +232,7 @@ foreach ($tool in @("ffmpeg.exe", "ffprobe.exe")) {
     $toolHash = (Get-FileHash -Algorithm SHA256 (Join-Path $ffmpegDistDir $tool)).Hash.ToLower()
     Set-Content -Path (Join-Path $ffmpegDistDir "$tool.sha256") -Value $toolHash -Encoding ascii -NoNewline
 }
-Write-Host "Bundled FFmpeg 8.0.1 (gyan.dev essentials, GPL)."
+Write-Host "Bundled FFmpeg 8.1.2 (gyan.dev essentials, GPL)."
 
 Copy-Item (Join-Path $RootDir "THIRD_PARTY_NOTICES.txt") $DistDir -Force
 Copy-Item (Join-Path $RootDir "LICENSE") (Join-Path $DistDir "LICENSE.txt") -Force
