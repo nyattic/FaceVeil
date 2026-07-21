@@ -202,6 +202,13 @@ int main(int argc, char **argv)
     const QString samplePath = tempDir.filePath("sample.mp4");
     const QString outputPath = tempDir.filePath("out/redacted.mp4");
     QDir().mkpath(tempDir.filePath("out"));
+    const auto stagingLeftovers = [](const QString &dirPath)
+    {
+        return QDir(dirPath)
+            .entryList({QStringLiteral(".redactly-*")},
+                       QDir::AllEntries | QDir::Hidden | QDir::NoDotAndDotDot)
+            .size();
+    };
 
     assert(generateSample(*tools, samplePath));
     std::puts("sample generated: ok");
@@ -238,6 +245,7 @@ int main(int argc, char **argv)
     assert(reader.errorString().isEmpty());
     assert(frameCount >= 55 && frameCount <= 65);
     assert(writer.finish());
+    assert(stagingLeftovers(tempDir.filePath("out")) == 0);
     std::printf("round trip (%d frames): ok\n", frameCount);
 
     {
@@ -254,6 +262,7 @@ int main(int argc, char **argv)
         assert(guardedWriter.writeFrame(guardedFrame));
         assert(!guardedWriter.finish([] { return false; }));
         assert(!QFile::exists(guardedPath));
+        assert(stagingLeftovers(tempDir.filePath("out")) == 0);
         std::puts("video publish guard: ok");
     }
 
@@ -529,6 +538,7 @@ int main(int argc, char **argv)
         assert(reviewCalled);
         assert(result.status == redactly::VideoProcessStatus::Cancelled);
         assert(!QFile::exists(reviewCancelledPath));
+        assert(stagingLeftovers(tempDir.path()) == 0);
         std::puts("video review cancellation: ok");
     }
 
@@ -551,6 +561,7 @@ int main(int argc, char **argv)
                 const redactly::VideoInfo &)
             {
                 reviewCalled = true;
+                assert(stagingLeftovers(tempDir.path()) >= 1);
                 assert(QFile::remove(replaceableSource));
                 assert(QFile::rename(replacement, replaceableSource));
                 return true;
@@ -559,6 +570,7 @@ int main(int argc, char **argv)
         assert(result.status == redactly::VideoProcessStatus::Completed);
         assert(result.frameCount >= 55 && result.frameCount <= 65);
         assert(QFile::exists(changedSourceOutput));
+        assert(stagingLeftovers(tempDir.path()) == 0);
         std::puts("stable source snapshot between video passes: ok");
     }
 

@@ -845,7 +845,11 @@ namespace redactly
         destinationPath_ = destination;
         outputRootPath_ = outputRoot;
         relativeDestinationPath_ = relativeDestination;
-        stagingDirectory_ = std::make_unique<QTemporaryDir>();
+        const QString stagingBase = !outputRootPath_.isEmpty()
+                                        ? outputRootPath_
+                                        : QFileInfo(destinationPath_).absolutePath();
+        stagingDirectory_ = std::make_unique<QTemporaryDir>(
+            QDir(stagingBase).filePath(QStringLiteral(".redactly-encode-XXXXXX")));
         if (!stagingDirectory_->isValid())
         {
             stagingDirectory_.reset();

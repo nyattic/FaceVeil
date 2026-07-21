@@ -5,7 +5,9 @@
 #include "redactly/PathUtil.hpp"
 
 #include <QCoreApplication>
+#include <QDir>
 #include <QFile>
+#include <QFileInfo>
 #include <QTemporaryDir>
 
 #include <spdlog/spdlog.h>
@@ -364,7 +366,11 @@ namespace redactly
                          sourcePath.toStdString());
         };
 
-        QTemporaryDir sourceStaging;
+        const QString stagingBase = !options.outputRootPath.isEmpty()
+                                        ? options.outputRootPath
+                                        : QFileInfo(destinationPath).absolutePath();
+        QTemporaryDir sourceStaging(
+            QDir(stagingBase).filePath(QStringLiteral(".redactly-snapshot-XXXXXX")));
         if (!sourceStaging.isValid())
         {
             result.error = trVideoProcessor(
