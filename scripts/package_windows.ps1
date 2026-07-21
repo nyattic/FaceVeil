@@ -242,6 +242,13 @@ if (Get-ChildItem -Path $DistDir -Recurse -Filter *.onnx -ErrorAction SilentlyCo
 }
 
 Write-Host "Running release tests..."
+$testBinDirs = @((Join-Path $BuildDir "tests"), (Join-Path $BuildDir "tests/$BuildType")) |
+    Where-Object { Test-Path $_ }
+if (-not $testBinDirs) { throw "Test binary directory was not found under $BuildDir" }
+foreach ($testBinDir in $testBinDirs) {
+    Copy-Item $onnxDll $testBinDir -Force
+    Copy-Item $dmlDll $testBinDir -Force
+}
 $env:PATH = "$DistDir;$ffmpegDistDir;$(Join-Path $QtRoot 'bin');$env:PATH"
 ctest --test-dir $BuildDir -C $BuildType --output-on-failure
 if ($LASTEXITCODE -ne 0) { throw "Release tests failed (exit $LASTEXITCODE)" }
