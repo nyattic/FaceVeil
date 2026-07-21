@@ -17,7 +17,7 @@ The interface is available in English, Korean, Japanese, and Simplified Chinese.
 
 Download from [Releases](https://github.com/nyattic/Redactly/releases/latest):
 
-- **macOS** (Apple Silicon, macOS 26+) — open the `.dmg`, drag to Applications
+- **macOS** (Apple Silicon, macOS 15+) — open the `.dmg`, drag to Applications
 - **Windows** (x64, Windows 10+) — unzip, run `Redactly.exe`. GPU acceleration needs Windows 10 1903+ and a DirectX 12 capable GPU (NVIDIA, AMD, or Intel); without one, detection runs on the CPU.
 - **Linux** (x86_64) — download the `.AppImage`, `chmod +x` it, and run it
 

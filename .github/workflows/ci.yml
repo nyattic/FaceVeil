@@ -30,12 +30,12 @@ env:
 jobs:
   macos:
     name: Build & test macOS
-    runs-on: macos-26
+    runs-on: macos-15
     env:
       CMAKE_PREFIX_PATH: /opt/homebrew
       PKG_CONFIG_PATH: /opt/homebrew/lib/pkgconfig
       HOMEBREW_NO_REQUIRE_TAP_TRUST: 1
-      MACOSX_DEPLOYMENT_TARGET: '26.0'
+      MACOSX_DEPLOYMENT_TARGET: '15.0'
     steps:
       - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5
 
@@ -43,7 +43,7 @@ jobs:
         run: brew install cmake qt opencv onnxruntime spdlog exiv2 ffmpeg
 
       - name: Configure
-        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_OSX_DEPLOYMENT_TARGET=26.0
+        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_OSX_DEPLOYMENT_TARGET=15.0
 
       - name: Build
         run: cmake --build build --parallel

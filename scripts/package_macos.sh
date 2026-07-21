@@ -12,7 +12,7 @@ MACOS_DIR="$DIST_APP/Contents/MacOS"
 EXECUTABLE="$MACOS_DIR/Redactly"
 ENTITLEMENTS="$ROOT_DIR/scripts/entitlements.plist"
 BUNDLE_ID="${BUNDLE_ID:-com.redactly.app}"
-REDACTLY_MACOS_DEPLOYMENT_TARGET="${MACOSX_DEPLOYMENT_TARGET:-26.0}"
+REDACTLY_MACOS_DEPLOYMENT_TARGET="${MACOSX_DEPLOYMENT_TARGET:-15.0}"
 
 for tool in cmake ctest codesign macdeployqt install_name_tool otool vtool hdiutil ditto brew; do
     if ! command -v "$tool" >/dev/null 2>&1; then

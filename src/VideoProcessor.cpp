@@ -210,7 +210,10 @@ namespace redactly
                     stopping_ = true;
                 }
                 workAvailable_.notify_all();
-                workers_.clear();
+                for (auto &worker: workers_)
+                {
+                    worker.join();
+                }
             }
 
             MaskWorkerPool(const MaskWorkerPool &) = delete;
@@ -266,7 +269,7 @@ namespace redactly
             std::mutex mutex_;
             std::condition_variable workAvailable_;
             std::condition_variable workComplete_;
-            std::vector<std::jthread> workers_;
+            std::vector<std::thread> workers_;
             std::function<void()> task_;
             std::size_t pending_ = 0;
             std::uint64_t generation_ = 0;
