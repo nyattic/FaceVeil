@@ -1,6 +1,8 @@
 <!-- Release notes through v1.9.0 are archived here. New releases use one file
      per version in release-notes/. -->
 
+> Historical note: releases through v1.10.1 were published under the Redactly name. Product and artifact names below are preserved as originally released.
+
 # Redactly 1.9.0
 
 Adds video review and more anonymization choices, strengthens tracking and

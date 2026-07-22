@@ -1,5 +1,5 @@
-#include "redactly/SceneCut.hpp"
-#include "redactly/Tracking.hpp"
+#include "cloakframe/SceneCut.hpp"
+#include "cloakframe/Tracking.hpp"
 
 #include <opencv2/core.hpp>
 
@@ -11,15 +11,15 @@
 
 namespace
 {
-    redactly::FaceDetection det(float x, float y, float score = 0.9F, float size = 40.0F)
+    cloakframe::FaceDetection det(float x, float y, float score = 0.9F, float size = 40.0F)
     {
         return {cv::Rect2f(x, y, size, size), score};
     }
 
-    std::vector<redactly::FaceDetections> movingObjectSequence(int frames, float startX, float stepX,
+    std::vector<cloakframe::FaceDetections> movingObjectSequence(int frames, float startX, float stepX,
                                                                float y = 100.0F, float score = 0.9F)
     {
-        std::vector<redactly::FaceDetections> sequence(frames);
+        std::vector<cloakframe::FaceDetections> sequence(frames);
         for (int frame = 0; frame < frames; ++frame)
         {
             sequence[frame].push_back(det(startX + stepX * static_cast<float>(frame), y, score));
@@ -38,7 +38,7 @@ namespace
 
     void testConstantVelocitySingleTrack()
     {
-        const auto tracks = redactly::buildTracks(movingObjectSequence(30, 50.0F, 5.0F));
+        const auto tracks = cloakframe::buildTracks(movingObjectSequence(30, 50.0F, 5.0F));
         assert(tracks.size() == 1);
         assert(tracks[0].boxes.size() == 30);
         assert(tracks[0].firstFrame() == 0);
@@ -56,11 +56,11 @@ namespace
         sequence[11].clear();
         sequence[12].clear();
 
-        auto tracks = redactly::buildTracks(sequence);
+        auto tracks = cloakframe::buildTracks(sequence);
         assert(tracks.size() == 1);
         assert(tracks[0].boxAtFrame(11) == nullptr);
 
-        redactly::interpolateGaps(tracks[0], 30);
+        cloakframe::interpolateGaps(tracks[0], 30);
         assert(tracks[0].boxes.size() == 20);
 
         const auto *filled = tracks[0].boxAtFrame(11);
@@ -78,9 +78,9 @@ namespace
             sequence[frame].clear();
         }
 
-        auto tracks = redactly::buildTracks(sequence);
+        auto tracks = cloakframe::buildTracks(sequence);
         assert(tracks.size() == 1);
-        redactly::interpolateGaps(tracks[0], 3);
+        cloakframe::interpolateGaps(tracks[0], 3);
         assert(tracks[0].boxAtFrame(8) == nullptr);
     }
 
@@ -91,12 +91,12 @@ namespace
         {
             sequence[frame][0].score = 0.2F;
         }
-        const auto tracks = redactly::buildTracks(sequence);
+        const auto tracks = cloakframe::buildTracks(sequence);
         assert(tracks.size() == 1);
         assert(tracks[0].boxes.size() == 15);
         assert(tracks[0].boxAtFrame(6) != nullptr);
 
-        const auto lowOnly = redactly::buildTracks(movingObjectSequence(15, 50.0F, 5.0F, 100.0F, 0.2F));
+        const auto lowOnly = cloakframe::buildTracks(movingObjectSequence(15, 50.0F, 5.0F, 100.0F, 0.2F));
         assert(lowOnly.empty());
     }
 
@@ -108,7 +108,7 @@ namespace
             sequence[frame][0].score = 0.9F;
         }
 
-        const auto tracks = redactly::buildTracks(sequence);
+        const auto tracks = cloakframe::buildTracks(sequence);
         assert(tracks.size() == 1);
         assert(tracks[0].lastFrame() == 34);
     }
@@ -118,44 +118,44 @@ namespace
         auto weak = movingObjectSequence(20, 50.0F, 5.0F, 100.0F, 0.2F);
         weak[3][0].score = 0.9F;
         weak[4][0].score = 0.9F;
-        auto weakTracks = redactly::buildBidirectionalTracks(weak);
+        auto weakTracks = cloakframe::buildBidirectionalTracks(weak);
         assert(weakTracks.size() == 1);
-        redactly::postProcessTracks(weakTracks, {}, 20);
+        cloakframe::postProcessTracks(weakTracks, {}, 20);
         assert(weakTracks.empty());
 
         auto solid = movingObjectSequence(20, 50.0F, 5.0F);
-        auto solidTracks = redactly::buildBidirectionalTracks(solid);
+        auto solidTracks = cloakframe::buildBidirectionalTracks(solid);
         assert(solidTracks.size() == 1);
-        redactly::postProcessTracks(solidTracks, {}, 20);
+        cloakframe::postProcessTracks(solidTracks, {}, 20);
         assert(solidTracks.size() == 1);
     }
 
     void testShortStrongBurstIsKept()
     {
         auto burst = movingObjectSequence(2, 50.0F, 5.0F);
-        auto tracks = redactly::buildBidirectionalTracks(burst);
+        auto tracks = cloakframe::buildBidirectionalTracks(burst);
         assert(tracks.size() == 1);
-        redactly::postProcessTracks(tracks, {}, 2);
+        cloakframe::postProcessTracks(tracks, {}, 2);
         assert(tracks.size() == 1);
     }
 
     void testHighConfidenceSingletonIsKept()
     {
-        std::vector<redactly::FaceDetections> sequence(6);
+        std::vector<cloakframe::FaceDetections> sequence(6);
         sequence[5].push_back(det(50.0F, 100.0F));
 
-        auto tracks = redactly::buildBidirectionalTracks(
-            sequence, {}, 0.5F, redactly::SceneCuts({5}));
+        auto tracks = cloakframe::buildBidirectionalTracks(
+            sequence, {}, 0.5F, cloakframe::SceneCuts({5}));
         assert(tracks.size() == 1);
-        redactly::postProcessTracks(tracks, {}, 6, redactly::SceneCuts({5}));
+        cloakframe::postProcessTracks(tracks, {}, 6, cloakframe::SceneCuts({5}));
         assert(tracks.size() == 1);
         assert(tracks[0].boxAtFrame(5) != nullptr);
 
-        auto strictTracks = redactly::buildBidirectionalTracks(
-            sequence, {}, 0.5F, redactly::SceneCuts({5}));
-        redactly::TrackPostProcessConfig strict;
+        auto strictTracks = cloakframe::buildBidirectionalTracks(
+            sequence, {}, 0.5F, cloakframe::SceneCuts({5}));
+        cloakframe::TrackPostProcessConfig strict;
         strict.shortTrackMinStrong = 2;
-        redactly::postProcessTracks(strictTracks, strict, 6, redactly::SceneCuts({5}));
+        cloakframe::postProcessTracks(strictTracks, strict, 6, cloakframe::SceneCuts({5}));
         assert(strictTracks.empty());
     }
 
@@ -166,7 +166,7 @@ namespace
         {
             stationary[frame][0].score = 0.9F;
         }
-        const auto stationaryTracks = redactly::buildTracks(stationary);
+        const auto stationaryTracks = cloakframe::buildTracks(stationary);
         assert(stationaryTracks.size() == 1);
         assert(stationaryTracks[0].lastFrame() == 34);
 
@@ -175,14 +175,14 @@ namespace
         {
             moving[frame][0].score = 0.9F;
         }
-        const auto movingTracks = redactly::buildTracks(moving);
+        const auto movingTracks = cloakframe::buildTracks(moving);
         assert(movingTracks.size() == 1);
         assert(movingTracks[0].lastFrame() == 49);
     }
 
     void testCrossingObjectsKeepTwoTracks()
     {
-        std::vector<redactly::FaceDetections> sequence(21);
+        std::vector<cloakframe::FaceDetections> sequence(21);
         for (int frame = 0; frame <= 20; ++frame)
         {
             const auto offset = 10.0F * static_cast<float>(frame);
@@ -190,17 +190,17 @@ namespace
             sequence[frame].push_back(det(200.0F - offset, 100.0F));
         }
 
-        const auto tracks = redactly::buildTracks(sequence);
+        const auto tracks = cloakframe::buildTracks(sequence);
         assert(tracks.size() == 2);
         for (int frame = 0; frame <= 20; ++frame)
         {
-            assert(redactly::trackRegionsForFrame(tracks, frame).size() == 2);
+            assert(cloakframe::trackRegionsForFrame(tracks, frame).size() == 2);
         }
     }
 
     void testBidirectionalMergeProducesSingleTrack()
     {
-        const auto tracks = redactly::buildBidirectionalTracks(movingObjectSequence(20, 50.0F, 5.0F));
+        const auto tracks = cloakframe::buildBidirectionalTracks(movingObjectSequence(20, 50.0F, 5.0F));
         assert(tracks.size() == 1);
         assert(tracks[0].boxes.size() == 20);
     }
@@ -213,11 +213,11 @@ namespace
             sequence[frame][0].score = 0.2F;
         }
 
-        const auto forwardOnly = redactly::buildTracks(sequence);
+        const auto forwardOnly = cloakframe::buildTracks(sequence);
         assert(forwardOnly.size() == 1);
         assert(forwardOnly[0].firstFrame() == 5);
 
-        const auto merged = redactly::buildBidirectionalTracks(sequence);
+        const auto merged = cloakframe::buildBidirectionalTracks(sequence);
         assert(merged.size() == 1);
         assert(merged[0].firstFrame() == 0);
         assert(merged[0].boxes.size() == 20);
@@ -225,7 +225,7 @@ namespace
 
     void testSmoothingNeverUncoversDetections()
     {
-        std::vector<redactly::FaceDetections> sequence(20);
+        std::vector<cloakframe::FaceDetections> sequence(20);
         for (int frame = 0; frame < 20; ++frame)
         {
             const float jitter = (frame % 2 == 0) ? 3.0F : -3.0F;
@@ -233,11 +233,11 @@ namespace
                                           100.0F + jitter));
         }
 
-        auto tracks = redactly::buildTracks(sequence);
+        auto tracks = cloakframe::buildTracks(sequence);
         assert(tracks.size() == 1);
         const auto original = tracks[0];
 
-        redactly::postProcessTracks(tracks, {}, 20);
+        cloakframe::postProcessTracks(tracks, {}, 20);
         for (const auto &box: original.boxes)
         {
             const auto *processed = tracks[0].boxAtFrame(box.frame);
@@ -249,8 +249,8 @@ namespace
     void testSmoothingDoesNotInflateMovingBoxes()
     {
         const auto sequence = movingObjectSequence(30, 0.0F, 12.0F);
-        auto tracks = redactly::buildBidirectionalTracks(sequence);
-        redactly::postProcessTracks(tracks, {}, 30);
+        auto tracks = cloakframe::buildBidirectionalTracks(sequence);
+        cloakframe::postProcessTracks(tracks, {}, 30);
         assert(tracks.size() == 1);
 
         for (int frame = 0; frame < 30; ++frame)
@@ -279,12 +279,12 @@ namespace
             sequence[frame].clear();
         }
 
-        auto tracks = redactly::buildTracks(sequence);
+        auto tracks = cloakframe::buildTracks(sequence);
         assert(tracks.size() == 1);
         assert(tracks[0].firstFrame() == 5);
         assert(tracks[0].lastFrame() == 10);
 
-        redactly::extendTrackEnds(tracks[0], 100, 12);
+        cloakframe::extendTrackEnds(tracks[0], 100, 12);
         assert(tracks[0].firstFrame() == 0);
         assert(tracks[0].lastFrame() == 11);
         assert(tracks[0].boxes.size() == 12);
@@ -293,21 +293,21 @@ namespace
 
     void testRegionsForFrameCollectsAllTracks()
     {
-        std::vector<redactly::FaceDetections> sequence(10);
+        std::vector<cloakframe::FaceDetections> sequence(10);
         for (int frame = 0; frame < 10; ++frame)
         {
             sequence[frame].push_back(det(50.0F, 50.0F));
             sequence[frame].push_back(det(300.0F, 200.0F));
         }
-        const auto tracks = redactly::buildTracks(sequence);
+        const auto tracks = cloakframe::buildTracks(sequence);
         assert(tracks.size() == 2);
-        assert(redactly::trackRegionsForFrame(tracks, 5).size() == 2);
-        assert(redactly::trackRegionsForFrame(tracks, 42).empty());
+        assert(cloakframe::trackRegionsForFrame(tracks, 5).size() == 2);
+        assert(cloakframe::trackRegionsForFrame(tracks, 42).empty());
     }
 
     void testSceneCutsContainer()
     {
-        const redactly::SceneCuts cuts({15, 5, 5, 0, -3});
+        const cloakframe::SceneCuts cuts({15, 5, 5, 0, -3});
         assert(cuts.frames() == std::vector<int>({5, 15}));
         assert(cuts.isCut(5));
         assert(!cuts.isCut(6));
@@ -316,11 +316,11 @@ namespace
         assert(cuts.spansCut(14, 16));
         assert(!cuts.spansCut(5, 14));
         assert(!cuts.spansCut(15, 19));
-        assert(!redactly::SceneCuts{}.spansCut(0, 1000));
+        assert(!cloakframe::SceneCuts{}.spansCut(0, 1000));
 
         const auto reversed = cuts.reversed(20);
         assert(reversed.frames() == std::vector<int>({5, 15}));
-        const auto asymmetric = redactly::SceneCuts({7}).reversed(20);
+        const auto asymmetric = cloakframe::SceneCuts({7}).reversed(20);
         assert(asymmetric.frames() == std::vector<int>({13}));
     }
 
@@ -328,10 +328,10 @@ namespace
     {
         const auto sequence = movingObjectSequence(20, 50.0F, 0.0F);
 
-        const auto unbroken = redactly::buildTracks(sequence);
+        const auto unbroken = cloakframe::buildTracks(sequence);
         assert(unbroken.size() == 1);
 
-        const auto split = redactly::buildTracks(sequence, {}, redactly::SceneCuts({10}));
+        const auto split = cloakframe::buildTracks(sequence, {}, cloakframe::SceneCuts({10}));
         assert(split.size() == 2);
         for (const auto &track: split)
         {
@@ -341,29 +341,29 @@ namespace
 
     void testNoInterpolationAcrossSceneCut()
     {
-        redactly::Track track;
+        cloakframe::Track track;
         track.id = 1;
         track.boxes.push_back({5, cv::Rect2f(50.0F, 50.0F, 40.0F, 40.0F), 0.9F, false});
         track.boxes.push_back({15, cv::Rect2f(50.0F, 50.0F, 40.0F, 40.0F), 0.9F, false});
 
         auto gated = track;
-        redactly::interpolateGaps(gated, 30, redactly::SceneCuts({10}));
+        cloakframe::interpolateGaps(gated, 30, cloakframe::SceneCuts({10}));
         assert(gated.boxes.size() == 2);
 
-        redactly::interpolateGaps(track, 30);
+        cloakframe::interpolateGaps(track, 30);
         assert(track.boxes.size() == 11);
     }
 
     void testExtendTrackEndsStopsAtSceneCut()
     {
-        redactly::Track track;
+        cloakframe::Track track;
         track.id = 1;
         for (int frame = 10; frame <= 15; ++frame)
         {
             track.boxes.push_back({frame, cv::Rect2f(50.0F, 50.0F, 40.0F, 40.0F), 0.9F, false});
         }
 
-        redactly::extendTrackEnds(track, 5, 30, redactly::SceneCuts({10, 16}));
+        cloakframe::extendTrackEnds(track, 5, 30, cloakframe::SceneCuts({10, 16}));
         assert(track.firstFrame() == 10);
         assert(track.lastFrame() == 15);
     }
@@ -372,7 +372,7 @@ namespace
     {
         const auto sequence = movingObjectSequence(20, 50.0F, 5.0F);
         const auto tracks =
-                redactly::buildBidirectionalTracks(sequence, {}, 0.5F, redactly::SceneCuts({10}));
+                cloakframe::buildBidirectionalTracks(sequence, {}, 0.5F, cloakframe::SceneCuts({10}));
         assert(tracks.size() == 2);
         for (const auto &track: tracks)
         {
@@ -380,7 +380,7 @@ namespace
         }
         for (int frame = 0; frame < 20; ++frame)
         {
-            assert(redactly::trackRegionsForFrame(tracks, frame).size() == 1);
+            assert(cloakframe::trackRegionsForFrame(tracks, frame).size() == 1);
         }
     }
 
@@ -403,7 +403,7 @@ namespace
         const auto sceneA = gradientFrame(true);
         const auto sceneB = gradientFrame(false);
 
-        redactly::SceneCutDetector detector;
+        cloakframe::SceneCutDetector detector;
         for (int frame = 0; frame < 10; ++frame)
         {
             detector.push(sceneA);
@@ -421,7 +421,7 @@ namespace
         const auto scene = gradientFrame(true);
         const cv::Mat flash(270, 480, CV_8UC1, cv::Scalar(255));
 
-        redactly::SceneCutDetector detector;
+        cloakframe::SceneCutDetector detector;
         for (int frame = 0; frame < 10; ++frame)
         {
             detector.push(scene);
@@ -437,7 +437,7 @@ namespace
     void testSceneCutDetectorIgnoresStaticScene()
     {
         const auto scene = gradientFrame(true);
-        redactly::SceneCutDetector detector;
+        cloakframe::SceneCutDetector detector;
         for (int frame = 0; frame < 30; ++frame)
         {
             detector.push(scene);
@@ -450,7 +450,7 @@ namespace
         const auto sceneA = gradientFrame(true);
         const auto sceneB = gradientFrame(false);
 
-        redactly::SceneCutDetector detector;
+        cloakframe::SceneCutDetector detector;
         for (int frame = 0; frame < 5; ++frame)
         {
             detector.push(sceneA);
@@ -462,7 +462,7 @@ namespace
 
     void testSizeJumpStartsNewTrackInsteadOfAssociating()
     {
-        std::vector<redactly::FaceDetections> sequence(8);
+        std::vector<cloakframe::FaceDetections> sequence(8);
         for (int frame = 0; frame < 4; ++frame)
         {
             sequence[frame].push_back({cv::Rect2f(100.0F, 100.0F, 100.0F, 100.0F), 0.9F});
@@ -471,7 +471,7 @@ namespace
         {
             sequence[frame].push_back({cv::Rect2f(65.0F, 65.0F, 170.0F, 170.0F), 0.9F});
         }
-        const auto tracks = redactly::buildTracks(sequence);
+        const auto tracks = cloakframe::buildTracks(sequence);
         assert(tracks.size() == 2);
         for (const auto &track: tracks)
         {
@@ -484,7 +484,7 @@ namespace
 
     void testGradualGrowthKeepsOneTrack()
     {
-        std::vector<redactly::FaceDetections> sequence(10);
+        std::vector<cloakframe::FaceDetections> sequence(10);
         float size = 40.0F;
         for (int frame = 0; frame < 10; ++frame)
         {
@@ -492,26 +492,26 @@ namespace
             sequence[frame].push_back({cv::Rect2f(150.0F - half, 150.0F - half, size, size), 0.9F});
             size *= 1.1F;
         }
-        assert(redactly::buildTracks(sequence).size() == 1);
+        assert(cloakframe::buildTracks(sequence).size() == 1);
     }
 
     void testInterpolationSkipsAcrossSizeJump()
     {
-        redactly::Track track;
+        cloakframe::Track track;
         track.boxes.push_back({0, cv::Rect2f(100.0F, 100.0F, 40.0F, 40.0F), 0.9F, false});
         track.boxes.push_back({5, cv::Rect2f(60.0F, 60.0F, 160.0F, 160.0F), 0.9F, false});
-        redactly::interpolateGaps(track, 10);
+        cloakframe::interpolateGaps(track, 10);
         assert(track.boxes.size() == 2);
     }
 
     void testSmoothingDoesNotInflateInterpolatedBoxes()
     {
-        redactly::Track track;
+        cloakframe::Track track;
         track.boxes.push_back({0, cv::Rect2f(0.0F, 0.0F, 200.0F, 200.0F), 0.9F, false});
         track.boxes.push_back({1, cv::Rect2f(75.0F, 75.0F, 50.0F, 50.0F), 0.9F, true});
         track.boxes.push_back({2, cv::Rect2f(0.0F, 0.0F, 200.0F, 200.0F), 0.9F, false});
 
-        redactly::smoothTrack(track, 2);
+        cloakframe::smoothTrack(track, 2);
 
         const float maxArea = 50.0F * 50.0F * 1.25F;
         assert(track.boxes[1].box.area() <= maxArea + 0.001F);
@@ -519,7 +519,7 @@ namespace
 
     void testTrackingSafetyLimitsRejectExcessiveData()
     {
-        std::vector<redactly::FaceDetections> crowded(1);
+        std::vector<cloakframe::FaceDetections> crowded(1);
         for (int index = 0; index < 1025; ++index)
         {
             crowded[0].push_back(det(static_cast<float>(index), 100.0F));
@@ -527,7 +527,7 @@ namespace
         bool crowdedRejected = false;
         try
         {
-            (void) redactly::buildTracks(crowded);
+            (void) cloakframe::buildTracks(crowded);
         }
         catch (const std::length_error &)
         {
@@ -536,7 +536,7 @@ namespace
         assert(crowdedRejected);
 
         constexpr int frameCount = 65'540;
-        std::vector<redactly::FaceDetections> singletons(frameCount);
+        std::vector<cloakframe::FaceDetections> singletons(frameCount);
         std::vector<int> cuts;
         cuts.reserve(frameCount);
         for (int frame = 0; frame < frameCount; ++frame)
@@ -547,7 +547,7 @@ namespace
         bool trackCountRejected = false;
         try
         {
-            (void) redactly::buildTracks(singletons, {}, redactly::SceneCuts(cuts));
+            (void) cloakframe::buildTracks(singletons, {}, cloakframe::SceneCuts(cuts));
         }
         catch (const std::length_error &)
         {
@@ -563,28 +563,28 @@ namespace
         bool buildCancelled = false;
         try
         {
-            (void) redactly::buildBidirectionalTracks(
+            (void) cloakframe::buildBidirectionalTracks(
                 sequence, {}, 0.5F, {}, [&checks]
                 {
                     return ++checks < 5;
                 });
         }
-        catch (const redactly::TrackingCancelled &)
+        catch (const cloakframe::TrackingCancelled &)
         {
             buildCancelled = true;
         }
         assert(buildCancelled);
 
-        auto tracks = redactly::buildBidirectionalTracks(sequence);
+        auto tracks = cloakframe::buildBidirectionalTracks(sequence);
         bool postProcessCancelled = false;
         try
         {
-            redactly::postProcessTracks(tracks, {}, 120, {}, []
+            cloakframe::postProcessTracks(tracks, {}, 120, {}, []
             {
                 return false;
             });
         }
-        catch (const redactly::TrackingCancelled &)
+        catch (const cloakframe::TrackingCancelled &)
         {
             postProcessCancelled = true;
         }

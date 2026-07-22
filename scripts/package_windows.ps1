@@ -11,8 +11,8 @@ $ErrorActionPreference = "Stop"
 
 $RootDir = Resolve-Path (Join-Path $PSScriptRoot "..")
 $BuildDir = Join-Path $RootDir "build-windows"
-$DistDir = Join-Path $RootDir "dist/windows/Redactly"
-$ExePath = Join-Path $BuildDir "Redactly.exe"
+$DistDir = Join-Path $RootDir "dist/windows/CloakFrame"
+$ExePath = Join-Path $BuildDir "CloakFrame.exe"
 
 foreach ($tool in @("cmake")) {
     if (-not (Get-Command $tool -ErrorAction SilentlyContinue)) {
@@ -91,10 +91,10 @@ cmake --build $BuildDir --config $BuildType
 if ($LASTEXITCODE -ne 0) { throw "CMake build failed (exit $LASTEXITCODE)" }
 
 if (-not (Test-Path $ExePath)) {
-    $ExePath = Join-Path $BuildDir "$BuildType/Redactly.exe"
+    $ExePath = Join-Path $BuildDir "$BuildType/CloakFrame.exe"
 }
 if (-not (Test-Path $ExePath)) {
-    throw "Redactly.exe was not found after build (looked in $BuildDir and $BuildDir\$BuildType)."
+    throw "CloakFrame.exe was not found after build (looked in $BuildDir and $BuildDir\$BuildType)."
 }
 
 if (Test-Path $DistDir) {
@@ -108,7 +108,7 @@ $windeployqt = Join-Path $QtRoot "bin/windeployqt.exe"
 if (-not (Test-Path $windeployqt)) {
     throw "windeployqt.exe was not found under $QtRoot\bin"
 }
-& $windeployqt --release --compiler-runtime (Join-Path $DistDir "Redactly.exe")
+& $windeployqt --release --compiler-runtime (Join-Path $DistDir "CloakFrame.exe")
 if ($LASTEXITCODE -ne 0) { throw "windeployqt failed (exit $LASTEXITCODE)" }
 
 $onnxCandidates = @(
@@ -255,4 +255,4 @@ if ($LASTEXITCODE -ne 0) { throw "Release tests failed (exit $LASTEXITCODE)" }
 
 Write-Host ""
 Write-Host "✅ Packaged app: $DistDir"
-Write-Host "   Run with:     $DistDir\Redactly.exe"
+Write-Host "   Run with:     $DistDir\CloakFrame.exe"

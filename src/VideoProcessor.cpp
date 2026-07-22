@@ -1,8 +1,8 @@
-#include "redactly/VideoProcessor.hpp"
+#include "cloakframe/VideoProcessor.hpp"
 
-#include "redactly/ImageIo.hpp"
-#include "redactly/MemoryBudget.hpp"
-#include "redactly/PathUtil.hpp"
+#include "cloakframe/ImageIo.hpp"
+#include "cloakframe/MemoryBudget.hpp"
+#include "cloakframe/PathUtil.hpp"
 
 #include <QCoreApplication>
 #include <QDir>
@@ -38,7 +38,7 @@
 #include <sys/stat.h>
 #endif
 
-namespace redactly
+namespace cloakframe
 {
     namespace
     {
@@ -303,7 +303,7 @@ namespace redactly
 
         QString trVideoProcessor(const char *text)
         {
-            return QCoreApplication::translate("redactly::VideoProcessor", text);
+            return QCoreApplication::translate("cloakframe::VideoProcessor", text);
         }
 
         void scaleTracksToNative(std::vector<Track> &tracks, float scaleX, float scaleY)
@@ -398,7 +398,7 @@ namespace redactly
                                         ? options.outputRootPath
                                         : QFileInfo(destinationPath).absolutePath();
         RetryingStagingDir sourceStaging(
-            QDir(stagingBase).filePath(QStringLiteral(".redactly-snapshot-XXXXXX")));
+            QDir(stagingBase).filePath(QStringLiteral(".cloakframe-snapshot-XXXXXX")));
         if (!sourceStaging.isValid())
         {
             result.error = trVideoProcessor(

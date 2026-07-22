@@ -1,4 +1,4 @@
-#include "redactly/OnnxGraphPatch.hpp"
+#include "cloakframe/OnnxGraphPatch.hpp"
 
 #include <array>
 #include <cstring>
@@ -6,7 +6,7 @@
 #include <string>
 #include <string_view>
 
-namespace redactly
+namespace cloakframe
 {
     namespace
     {
@@ -15,7 +15,7 @@ namespace redactly
         constexpr std::uint32_t kWireLengthDelimited = 2;
         constexpr std::uint32_t kWireFixed32 = 5;
 
-        constexpr std::string_view kScalesInitializerName = "redactly_upsample_scales";
+        constexpr std::string_view kScalesInitializerName = "cloakframe_upsample_scales";
 
         struct PbField
         {

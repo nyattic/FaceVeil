@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=CloakFrame
+GenericName=Media Anonymizer
+Comment=Anonymize faces and license plates locally in photos and videos
+Exec=CloakFrame %F
+Icon=cloakframe
+Terminal=false
+Categories=Graphics;Photography;
+MimeType=image/jpeg;image/png;image/bmp;image/tiff;image/webp;video/mp4;video/quicktime;
+Keywords=face;plate;blur;mosaic;anonymize;redact;privacy;

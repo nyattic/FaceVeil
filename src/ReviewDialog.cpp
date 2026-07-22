@@ -1,4 +1,4 @@
-#include "redactly/ReviewDialog.hpp"
+#include "cloakframe/ReviewDialog.hpp"
 
 #include <QFrame>
 #include <QHBoxLayout>
@@ -22,7 +22,7 @@
 #include <functional>
 #include <vector>
 
-namespace redactly
+namespace cloakframe
 {
     namespace
     {

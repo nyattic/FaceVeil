@@ -1,4 +1,4 @@
-#include "redactly/MemoryBudget.hpp"
+#include "cloakframe/MemoryBudget.hpp"
 
 #include <algorithm>
 #include <limits>
@@ -14,7 +14,7 @@
 #include <unistd.h>
 #endif
 
-namespace redactly
+namespace cloakframe
 {
     std::uint64_t physicalMemoryBytes() noexcept
     {

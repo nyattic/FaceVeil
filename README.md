@@ -1,8 +1,8 @@
-# Redactly
+# CloakFrame
 
-![Release](https://img.shields.io/github/v/release/nyattic/Redactly?style=for-the-badge&logo=github&logoColor=white&labelColor=1e1b2e&color=6366f1)
-![Downloads](https://img.shields.io/github/downloads/nyattic/Redactly/total?style=for-the-badge&logo=github&logoColor=white&labelColor=1e1b2e&color=6366f1)
-![Last Commit](https://img.shields.io/github/last-commit/nyattic/Redactly?style=for-the-badge&logo=git&logoColor=white&labelColor=1e1b2e&color=6366f1)
+![Release](https://img.shields.io/github/v/release/nyattic/CloakFrame?style=for-the-badge&logo=github&logoColor=white&labelColor=1e1b2e&color=6366f1)
+![Downloads](https://img.shields.io/github/downloads/nyattic/CloakFrame/total?style=for-the-badge&logo=github&logoColor=white&labelColor=1e1b2e&color=6366f1)
+![Last Commit](https://img.shields.io/github/last-commit/nyattic/CloakFrame?style=for-the-badge&logo=git&logoColor=white&labelColor=1e1b2e&color=6366f1)
 ![License](https://img.shields.io/badge/license-GPL--3.0--or--later-6366f1?style=for-the-badge&logo=gnu&logoColor=white&labelColor=1e1b2e)
 
 ![macOS](https://img.shields.io/badge/macOS-Apple%20Silicon-000000?style=for-the-badge&logo=apple&logoColor=white&labelColor=1e1b2e)
@@ -13,15 +13,17 @@ Local desktop app that automatically redacts faces and license plates in your ph
 
 The interface is available in English, Korean, Japanese, and Simplified Chinese. The initial language follows the system locale and can be changed at any time in Settings.
 
+> **Renamed from Redactly:** CloakFrame imports existing settings on first launch and continues to use models already downloaded by earlier releases.
+
 ## Install
 
-Download from [Releases](https://github.com/nyattic/Redactly/releases/latest):
+Download from [Releases](https://github.com/nyattic/CloakFrame/releases/latest):
 
 - **macOS** (Apple Silicon, macOS 15+) — open the `.dmg`, drag to Applications
-- **Windows** (x64, Windows 10+) — unzip, run `Redactly.exe`. GPU acceleration needs Windows 10 1903+ and a DirectX 12 capable GPU (NVIDIA, AMD, or Intel); without one, detection runs on the CPU.
+- **Windows** (x64, Windows 10+) — unzip, run `CloakFrame.exe`. GPU acceleration needs Windows 10 1903+ and a DirectX 12 capable GPU (NVIDIA, AMD, or Intel); without one, detection runs on the CPU.
 - **Linux** (x86_64) — download the `.AppImage`, `chmod +x` it, and run it
 
-The first time you use a built-in model, Redactly downloads it once (3–17 MB) and caches it; after that it runs offline. The face models come from Hugging Face; the license plate model comes from the open-image-models project on GitHub.
+The first time you use a built-in model, CloakFrame downloads it once (3–17 MB) and caches it; after that it runs offline. The face models come from Hugging Face; the license plate model comes from the open-image-models project on GitHub.
 
 ## Use
 
@@ -35,15 +37,15 @@ Faces and plates can be hidden with pixelation, Gaussian blur, solid fill, or a 
 
 Originals are never modified. Enable **Review before saving** to inspect image detections, add missed regions, or review video tracks on a timeline before encoding. False video tracks can be excluded from the entire output with one click.
 
-Redactly refuses to start if two inputs would write to the same output path or if any planned output already exists, so results are never silently overwritten. Move or rename existing results before running the same batch again.
+CloakFrame refuses to start if two inputs would write to the same output path or if any planned output already exists, so results are never silently overwritten. Move or rename existing results before running the same batch again.
 
-When every item is processed and redacted successfully, the run finishes as **Done**. If any file fails, is skipped, or is saved without a detected region, Redactly finishes as **Review required** and shows a summary. Treat that state as incomplete, use the activity log to identify the affected files, and inspect them before sharing.
+When every item is processed and redacted successfully, the run finishes as **Done**. If any file fails, is skipped, or is saved without a detected region, CloakFrame finishes as **Review required** and shows a summary. Treat that state as incomplete, use the activity log to identify the affected files, and inspect them before sharing.
 
 Supported inputs: `.jpg` `.jpeg` `.png` `.bmp` `.tif` `.tiff` `.webp` images, and `.mp4` `.mov` `.m4v` videos (H.264/HEVC, 8-bit SDR). Video support is currently in **beta** — check the output before sharing it. On Linux the video pipeline is covered by automated tests but has not been manually tested yet.
 
 Detection runs on the GPU where available — CoreML on macOS, DirectML on Windows (bundled with the release and accelerating NVIDIA, AMD, and Intel GPUs alike), CUDA on NVIDIA Linux systems, and MIGraphX on supported AMD Linux systems — with automatic CPU fallback and a Settings toggle (on by default). Linux GPU detection requires a source build linked against a GPU-enabled ONNX Runtime; the current AppImage uses CPU inference.
 
-Videos are processed in two passes — detection with bidirectional tracking, then encoding — so faces stay covered through motion blur and brief occlusions. When review is enabled, Redactly pauses between the passes to show a track timeline. Encoding uses the GPU's hardware encoder when one works — NVENC or Quick Sync on Windows and Linux, VideoToolbox on macOS — falling back to CPU x264/x265 otherwise or when GPU acceleration is off in Settings. Output is an H.264 (default) or HEVC MP4, selectable in Settings, with the original audio (re-encoded to AAC only when the source codec doesn't fit MP4), container metadata removed, and rotation baked into the pixels. Variable frame rate input is converted to a constant frame rate; 10-bit/HDR input is rejected rather than silently degraded. Video processing uses an FFmpeg bundled next to the app when present, otherwise an FFmpeg found on `PATH`. The video quality preset lives in Settings.
+Videos are processed in two passes — detection with bidirectional tracking, then encoding — so faces stay covered through motion blur and brief occlusions. When review is enabled, CloakFrame pauses between the passes to show a track timeline. Encoding uses the GPU's hardware encoder when one works — NVENC or Quick Sync on Windows and Linux, VideoToolbox on macOS — falling back to CPU x264/x265 otherwise or when GPU acceleration is off in Settings. Output is an H.264 (default) or HEVC MP4, selectable in Settings, with the original audio (re-encoded to AAC only when the source codec doesn't fit MP4), container metadata removed, and rotation baked into the pixels. Variable frame rate input is converted to a constant frame rate; 10-bit/HDR input is rejected rather than silently degraded. Video processing uses an FFmpeg bundled next to the app when present, otherwise an FFmpeg found on `PATH`. The video quality preset lives in Settings.
 
 ## Build from source
 
@@ -57,14 +59,14 @@ The built-in models are **not bundled** and **not committed** to this repository
 
 You can also launch the app and use **Browse…** to select a custom SCRFD `.onnx` file.
 
-Only load custom ONNX models from sources you trust. Redactly checks basic SCRFD tensor compatibility before processing, but ONNX files are still executable model inputs handled by native runtime libraries.
+Only load custom ONNX models from sources you trust. CloakFrame checks basic SCRFD tensor compatibility before processing, but ONNX files are still executable model inputs handled by native runtime libraries.
 
 ### macOS
 
 ```bash
 cmake -S . -B build
 cmake --build build
-open build/Redactly.app
+open build/CloakFrame.app
 ```
 
 Install dependencies with Homebrew:
@@ -106,7 +108,7 @@ ONNX Runtime is detected via `pkg-config libonnxruntime` when available; otherwi
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Release \
   -DONNXRUNTIME_ROOT=/path/to/onnxruntime-linux-x64
 cmake --build build
-./build/Redactly
+./build/CloakFrame
 ```
 
 On Arch Linux, install the CPU development environment with:
@@ -130,7 +132,7 @@ For supported AMD GPUs, use the MIGraphX-enabled ROCm package instead:
 yay -S --needed onnxruntime-rocm
 ```
 
-The ONNX Runtime variants conflict, so install only one. Reconfigure the CMake build directory after changing variants. Redactly selects CUDA first, then MIGraphX, accepts the legacy ROCm execution provider from ONNX Runtime versions before 1.23, and falls back to CPU when provider initialization or model warmup fails.
+The ONNX Runtime variants conflict, so install only one. Reconfigure the CMake build directory after changing variants. CloakFrame selects CUDA first, then MIGraphX, accepts the legacy ROCm execution provider from ONNX Runtime versions before 1.23, and falls back to CPU when provider initialization or model warmup fails.
 
 ### Tests
 
@@ -148,21 +150,21 @@ Packaging scripts: [`scripts/package_macos.sh`](scripts/package_macos.sh), [`scr
 
 ## Privacy
 
-Your images and videos never leave your device — they are read from disk, processed locally (video encoding runs through a local FFmpeg process), and written to the output folder you pick. Redactly makes only two kinds of network request, and neither sends any image or personal data: a one-time download of a detection model the first time you use each built-in model — the face models from Hugging Face, or the license plate model from the open-image-models project on GitHub — and a check at launch against the GitHub Releases API to see whether a newer version exists. The update check can be turned off under **Settings → Check for updates on startup**. Supplying a custom SCRFD model with **Browse…** avoids downloading a built-in face model; license plate detection still requires its separate model.
+Your images and videos never leave your device — they are read from disk, processed locally (video encoding runs through a local FFmpeg process), and written to the output folder you pick. CloakFrame makes only two kinds of network request, and neither sends any image or personal data: a one-time download of a detection model the first time you use each built-in model — the face models from Hugging Face, or the license plate model from the open-image-models project on GitHub — and a check at launch against the GitHub Releases API to see whether a newer version exists. The update check can be turned off under **Settings → Check for updates on startup**. Supplying a custom SCRFD model with **Browse…** avoids downloading a built-in face model; license plate detection still requires its separate model.
 
 ## License
 
-**Application source code** — GNU General Public License v3.0 or later. SPDX identifier: `GPL-3.0-or-later`. You may use, study, share, and modify Redactly, including for commercial purposes; if you distribute it or a derivative, you must do so under the GPL and make the corresponding source available. See [LICENSE](LICENSE).
+**Application source code** — GNU General Public License v3.0 or later. SPDX identifier: `GPL-3.0-or-later`. You may use, study, share, and modify CloakFrame, including for commercial purposes; if you distribute it or a derivative, you must do so under the GPL and make the corresponding source available. See [LICENSE](LICENSE).
 
-> The application was previously licensed under PolyForm Noncommercial 1.0.0. It moved to the GPL v3.0-or-later starting with v1.1.0 because Redactly now links [Exiv2](https://exiv2.org/) (GPL-2.0-or-later) for metadata preservation. Versions released earlier under PolyForm Noncommercial remain under that license.
+> The application was previously licensed under PolyForm Noncommercial 1.0.0. It moved to the GPL v3.0-or-later starting with v1.1.0 because CloakFrame now links [Exiv2](https://exiv2.org/) (GPL-2.0-or-later) for metadata preservation. Versions released earlier under PolyForm Noncommercial remain under that license.
 
 Copyright © 2026 Nyabi.
 
-Redactly is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version. It is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+CloakFrame is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version. It is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
-**SCRFD models** — the built-in models are **not distributed with Redactly**; the app downloads them on first use from a [Hugging Face mirror](https://huggingface.co/RuteNL/SCRFD-face-detection-ONNX). They originate from [InsightFace](https://github.com/deepinsight/insightface) and are available for **non-commercial research use only**, under their own terms separate from the application license (the mirror's Apache-2.0 tag does not override InsightFace's terms). See the [InsightFace Model Zoo](https://github.com/deepinsight/insightface/blob/master/model_zoo/README.md) for details.
+**SCRFD models** — the built-in models are **not distributed with CloakFrame**; the app downloads them on first use from a [Hugging Face mirror](https://huggingface.co/RuteNL/SCRFD-face-detection-ONNX). They originate from [InsightFace](https://github.com/deepinsight/insightface) and are available for **non-commercial research use only**, under their own terms separate from the application license (the mirror's Apache-2.0 tag does not override InsightFace's terms). See the [InsightFace Model Zoo](https://github.com/deepinsight/insightface/blob/master/model_zoo/README.md) for details.
 
-**License plate model** — the built-in license plate detector is **not distributed with Redactly**; the app downloads it on first use from the [open-image-models](https://github.com/ankandrew/open-image-models) project by ankandrew, which is MIT-licensed. It is a YOLOv9-architecture model (see [Citation](#citation)) and is downloaded at runtime and cached locally, under its upstream project's terms. Confirm the current terms with the open-image-models project before any commercial or redistribution use.
+**License plate model** — the built-in license plate detector is **not distributed with CloakFrame**; the app downloads it on first use from the [open-image-models](https://github.com/ankandrew/open-image-models) project by ankandrew, which is MIT-licensed. It is a YOLOv9-architecture model (see [Citation](#citation)) and is downloaded at runtime and cached locally, under its upstream project's terms. Confirm the current terms with the open-image-models project before any commercial or redistribution use.
 
 **Third-party runtime dependencies** — Qt (LGPL-3.0 / GPL-3.0 / commercial), OpenCV (Apache-2.0), ONNX Runtime (MIT), DirectML (proprietary Microsoft license permitting redistribution; bundled with Windows releases only, as `DirectML.dll`), Exiv2 (GPL-2.0-or-later) with its own dependencies (Brotli, Expat, inih, zlib, GNU gettext), spdlog and {fmt} (MIT), and FFmpeg (LGPL-2.1-or-later with optional GPL components), which is invoked as a separate process for video decoding and encoding. Each retains its own license; the full texts are in [THIRD_PARTY_NOTICES.txt](THIRD_PARTY_NOTICES.txt) and are bundled with each release.
 

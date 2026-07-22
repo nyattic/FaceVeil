@@ -1,4 +1,4 @@
-#include "redactly/PlateDetector.hpp"
+#include "cloakframe/PlateDetector.hpp"
 
 #include <opencv2/imgproc.hpp>
 
@@ -15,7 +15,7 @@
 #include <string>
 #include <thread>
 
-namespace redactly
+namespace cloakframe
 {
     namespace
     {
@@ -64,7 +64,7 @@ namespace redactly
                                  const QByteArray &expectedSha256)
         : inputWidth_(512),
           inputHeight_(512),
-          env_(ORT_LOGGING_LEVEL_WARNING, "Redactly-Plate"),
+          env_(ORT_LOGGING_LEVEL_WARNING, "CloakFrame-Plate"),
           sessionOptions_(),
           session_(nullptr)
     {

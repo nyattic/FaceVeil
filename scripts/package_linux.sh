@@ -30,14 +30,14 @@ cmake --build "$BUILD_DIR" --config Release
 rm -rf "$APPDIR"
 DESTDIR="$APPDIR" cmake --install "$BUILD_DIR"
 
-VERSION="$(sed -n 's/^project(Redactly VERSION \([0-9.]*\).*/\1/p' "$ROOT_DIR/CMakeLists.txt")"
+VERSION="$(sed -n 's/^project(CloakFrame VERSION \([0-9.]*\).*/\1/p' "$ROOT_DIR/CMakeLists.txt")"
 VERSION="${VERSION:-0.0.0}"
 
-install -Dm644 "$ROOT_DIR/THIRD_PARTY_NOTICES.txt" "$APPDIR/usr/share/doc/redactly/THIRD_PARTY_NOTICES.txt"
-install -Dm644 "$ROOT_DIR/LICENSE" "$APPDIR/usr/share/doc/redactly/LICENSE.txt"
+install -Dm644 "$ROOT_DIR/THIRD_PARTY_NOTICES.txt" "$APPDIR/usr/share/doc/cloakframe/THIRD_PARTY_NOTICES.txt"
+install -Dm644 "$ROOT_DIR/LICENSE" "$APPDIR/usr/share/doc/cloakframe/LICENSE.txt"
 
-ICON_STAGE="$BUILD_DIR/redactly.png"
-cp "$ROOT_DIR/assets/redactly-512.png" "$ICON_STAGE"
+ICON_STAGE="$BUILD_DIR/cloakframe.png"
+cp "$ROOT_DIR/assets/cloakframe-512.png" "$ICON_STAGE"
 
 TOOLS_DIR="$BUILD_DIR/appimage-tools"
 mkdir -p "$TOOLS_DIR"
@@ -127,13 +127,13 @@ fi
 rm -rf "$DIST_DIR"
 mkdir -p "$DIST_DIR"
 
-OUTPUT="Redactly-${VERSION}-${ARCH}.AppImage"
+OUTPUT="CloakFrame-${VERSION}-${ARCH}.AppImage"
 (
     cd "$DIST_DIR"
     OUTPUT="$OUTPUT" "$LINUXDEPLOY" \
         --appdir "$APPDIR" \
-        --executable "$APPDIR/usr/bin/Redactly" \
-        --desktop-file "$APPDIR/usr/share/applications/redactly.desktop" \
+        --executable "$APPDIR/usr/bin/CloakFrame" \
+        --desktop-file "$APPDIR/usr/share/applications/cloakframe.desktop" \
         --icon-file "$ICON_STAGE" \
         --plugin qt \
         "${DEPLOY_ARGS[@]}" \

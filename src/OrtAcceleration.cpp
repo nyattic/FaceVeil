@@ -1,4 +1,4 @@
-#include "redactly/OrtAcceleration.hpp"
+#include "cloakframe/OrtAcceleration.hpp"
 
 #include <spdlog/spdlog.h>
 
@@ -7,7 +7,7 @@
 #include <unordered_map>
 #include <vector>
 
-namespace redactly
+namespace cloakframe
 {
     namespace
     {

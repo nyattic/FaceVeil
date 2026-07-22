@@ -4,15 +4,15 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 BUILD_DIR="$ROOT_DIR/build-release"
 DIST_DIR="$ROOT_DIR/dist/macos"
-APP_NAME="Redactly.app"
+APP_NAME="CloakFrame.app"
 APP_PATH="$BUILD_DIR/$APP_NAME"
 DIST_APP="$DIST_DIR/$APP_NAME"
 FRAMEWORKS_DIR="$DIST_APP/Contents/Frameworks"
 MACOS_DIR="$DIST_APP/Contents/MacOS"
-EXECUTABLE="$MACOS_DIR/Redactly"
+EXECUTABLE="$MACOS_DIR/CloakFrame"
 ENTITLEMENTS="$ROOT_DIR/scripts/entitlements.plist"
-BUNDLE_ID="${BUNDLE_ID:-com.redactly.app}"
-REDACTLY_MACOS_DEPLOYMENT_TARGET="${MACOSX_DEPLOYMENT_TARGET:-15.0}"
+BUNDLE_ID="${BUNDLE_ID:-com.cloakframe.app}"
+CLOAKFRAME_MACOS_DEPLOYMENT_TARGET="${MACOSX_DEPLOYMENT_TARGET:-15.0}"
 
 for tool in cmake ctest codesign macdeployqt install_name_tool otool vtool hdiutil ditto brew; do
     if ! command -v "$tool" >/dev/null 2>&1; then
@@ -41,7 +41,7 @@ fi
 
 cmake -S "$ROOT_DIR" -B "$BUILD_DIR" \
   -DCMAKE_BUILD_TYPE=Release \
-  -DCMAKE_OSX_DEPLOYMENT_TARGET="$REDACTLY_MACOS_DEPLOYMENT_TARGET" \
+  -DCMAKE_OSX_DEPLOYMENT_TARGET="$CLOAKFRAME_MACOS_DEPLOYMENT_TARGET" \
   -DCMAKE_PREFIX_PATH="$(brew --prefix qt);$HOMEBREW_PREFIX"
 cmake --build "$BUILD_DIR" --config Release
 
@@ -185,11 +185,11 @@ version_is_not_newer_than() {
         }'
 }
 
-echo "🔎 Verifying macOS $REDACTLY_MACOS_DEPLOYMENT_TARGET compatibility…"
+echo "🔎 Verifying macOS $CLOAKFRAME_MACOS_DEPLOYMENT_TARGET compatibility…"
 PLIST_MINIMUM="$(plutil -extract LSMinimumSystemVersion raw \
     "$DIST_APP/Contents/Info.plist" 2>/dev/null || true)"
-if [[ "$PLIST_MINIMUM" != "$REDACTLY_MACOS_DEPLOYMENT_TARGET" ]]; then
-    echo "❌ LSMinimumSystemVersion is '$PLIST_MINIMUM'; expected '$REDACTLY_MACOS_DEPLOYMENT_TARGET'."
+if [[ "$PLIST_MINIMUM" != "$CLOAKFRAME_MACOS_DEPLOYMENT_TARGET" ]]; then
+    echo "❌ LSMinimumSystemVersion is '$PLIST_MINIMUM'; expected '$CLOAKFRAME_MACOS_DEPLOYMENT_TARGET'."
     exit 1
 fi
 
@@ -208,8 +208,8 @@ while IFS= read -r -d '' candidate; do
     fi
 
     while IFS= read -r minimum; do
-        if ! version_is_not_newer_than "$minimum" "$REDACTLY_MACOS_DEPLOYMENT_TARGET"; then
-            echo "❌ $candidate requires macOS $minimum (maximum allowed: $REDACTLY_MACOS_DEPLOYMENT_TARGET)."
+        if ! version_is_not_newer_than "$minimum" "$CLOAKFRAME_MACOS_DEPLOYMENT_TARGET"; then
+            echo "❌ $candidate requires macOS $minimum (maximum allowed: $CLOAKFRAME_MACOS_DEPLOYMENT_TARGET)."
             COMPATIBILITY_FAILED=1
         fi
     done <<< "$MINIMUM_VERSIONS"
@@ -269,7 +269,7 @@ if [[ "${SKIP_DMG:-0}" == "1" ]]; then
     exit 0
 fi
 
-DMG_NAME="Redactly-${VERSION}-arm64.dmg"
+DMG_NAME="CloakFrame-${VERSION}-arm64.dmg"
 DMG_PATH="$DIST_DIR/$DMG_NAME"
 STAGING_DIR="$(mktemp -d)"
 trap 'rm -rf "$STAGING_DIR" || true' EXIT
@@ -279,7 +279,7 @@ ln -s /Applications "$STAGING_DIR/Applications"
 
 rm -f "$DMG_PATH"
 hdiutil create \
-    -volname "Redactly" \
+    -volname "CloakFrame" \
     -srcfolder "$STAGING_DIR" \
     -ov \
     -format UDZO \

@@ -1,11 +1,11 @@
-#include "redactly/SceneCut.hpp"
+#include "cloakframe/SceneCut.hpp"
 
 #include <opencv2/imgproc.hpp>
 
 #include <algorithm>
 #include <cstddef>
 
-namespace redactly
+namespace cloakframe
 {
     namespace
     {

@@ -1,13 +1,13 @@
-#include "redactly/Tracking.hpp"
+#include "cloakframe/Tracking.hpp"
 
-#include "redactly/DetectionGeometry.hpp"
+#include "cloakframe/DetectionGeometry.hpp"
 
 #include <algorithm>
 #include <cmath>
 #include <stdexcept>
 #include <utility>
 
-namespace redactly
+namespace cloakframe
 {
     namespace
     {

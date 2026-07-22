@@ -1,7 +1,7 @@
-#include "redactly/ImageScanner.hpp"
+#include "cloakframe/ImageScanner.hpp"
 
-#include "redactly/PathUtil.hpp"
-#include "redactly/VideoIo.hpp"
+#include "cloakframe/PathUtil.hpp"
+#include "cloakframe/VideoIo.hpp"
 
 #include <QFileInfo>
 
@@ -9,7 +9,7 @@
 #include <system_error>
 #include <unordered_set>
 
-namespace redactly
+namespace cloakframe
 {
     namespace
     {

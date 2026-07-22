@@ -1,6 +1,6 @@
-#include "redactly/ImageIo.hpp"
+#include "cloakframe/ImageIo.hpp"
 
-#include "redactly/PathUtil.hpp"
+#include "cloakframe/PathUtil.hpp"
 
 #include <QImageIOHandler>
 #include <QImageReader>
@@ -59,17 +59,17 @@
 #endif
 #endif
 
-#ifdef REDACTLY_HAVE_EXIV2
+#ifdef CLOAKFRAME_HAVE_EXIV2
 #include <exiv2/exiv2.hpp>
 #endif
 
-namespace redactly
+namespace cloakframe
 {
     namespace
     {
         constexpr std::size_t kMaxContainerChunks = 65'536;
 
-#ifdef REDACTLY_HAVE_EXIV2
+#ifdef CLOAKFRAME_HAVE_EXIV2
         std::mutex g_exiv2Mutex;
         std::mutex g_exiv2NamespaceMutex;
         std::once_flag g_exiv2Initialization;
@@ -380,7 +380,7 @@ namespace redactly
             static std::atomic<std::uint64_t> sequence{0};
             static thread_local std::mt19937_64 rng{std::random_device{}()};
 
-            return ".redactly-" + std::to_string(rng()) + "-" +
+            return ".cloakframe-" + std::to_string(rng()) + "-" +
                    std::to_string(sequence.fetch_add(1, std::memory_order_relaxed)) + ".tmp";
         }
 
@@ -1240,7 +1240,7 @@ namespace redactly
 
     bool metadataSupportAvailable()
     {
-#ifdef REDACTLY_HAVE_EXIV2
+#ifdef CLOAKFRAME_HAVE_EXIV2
         return initializeExiv2();
 #else
         return false;
@@ -1308,7 +1308,7 @@ namespace redactly
 
     int readExifOrientation(const std::filesystem::path &source)
     {
-#ifdef REDACTLY_HAVE_EXIV2
+#ifdef CLOAKFRAME_HAVE_EXIV2
         if (!initializeExiv2())
         {
             return qtImageOrientation(source);
@@ -1843,7 +1843,7 @@ namespace redactly
                       const std::filesystem::path &destination,
                       bool normalizeOrientation)
     {
-#ifdef REDACTLY_HAVE_EXIV2
+#ifdef CLOAKFRAME_HAVE_EXIV2
         if (!initializeExiv2())
         {
             return false;

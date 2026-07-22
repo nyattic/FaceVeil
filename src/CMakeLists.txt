@@ -1,18 +1,18 @@
-set(REDACTLY_APP_OPTIONS)
-set(REDACTLY_APP_RESOURCES)
+set(CLOAKFRAME_APP_OPTIONS)
+set(CLOAKFRAME_APP_RESOURCES)
 if(APPLE)
-    list(APPEND REDACTLY_APP_OPTIONS MACOSX_BUNDLE)
-    set(APP_ICON_MACOS "${PROJECT_SOURCE_DIR}/assets/Redactly.icns")
+    list(APPEND CLOAKFRAME_APP_OPTIONS MACOSX_BUNDLE)
+    set(APP_ICON_MACOS "${PROJECT_SOURCE_DIR}/assets/CloakFrame.icns")
     if(EXISTS "${APP_ICON_MACOS}")
         set_source_files_properties("${APP_ICON_MACOS}" PROPERTIES
             MACOSX_PACKAGE_LOCATION "Resources")
-        list(APPEND REDACTLY_APP_RESOURCES "${APP_ICON_MACOS}")
+        list(APPEND CLOAKFRAME_APP_RESOURCES "${APP_ICON_MACOS}")
     endif()
 elseif(WIN32)
-    list(APPEND REDACTLY_APP_OPTIONS WIN32)
+    list(APPEND CLOAKFRAME_APP_OPTIONS WIN32)
 endif()
 
-add_library(redactly_core STATIC
+add_library(cloakframe_core STATIC
     ImageIo.cpp
     ImageScanner.cpp
     MemoryBudget.cpp
@@ -28,33 +28,33 @@ add_library(redactly_core STATIC
     Tracking.cpp
     VideoIo.cpp
     VideoProcessor.cpp
-    ${PROJECT_SOURCE_DIR}/include/redactly/DetectionGeometry.hpp
-    ${PROJECT_SOURCE_DIR}/include/redactly/Detector.hpp
-    ${PROJECT_SOURCE_DIR}/include/redactly/FaceDetection.hpp
-    ${PROJECT_SOURCE_DIR}/include/redactly/ImageIo.hpp
-    ${PROJECT_SOURCE_DIR}/include/redactly/ImageScanner.hpp
-    ${PROJECT_SOURCE_DIR}/include/redactly/MemoryBudget.hpp
-    ${PROJECT_SOURCE_DIR}/include/redactly/ModelCatalog.hpp
-    ${PROJECT_SOURCE_DIR}/include/redactly/Mosaic.hpp
-    ${PROJECT_SOURCE_DIR}/include/redactly/OnnxGraphPatch.hpp
-    ${PROJECT_SOURCE_DIR}/include/redactly/OrderedParallel.hpp
-    ${PROJECT_SOURCE_DIR}/include/redactly/OrtAcceleration.hpp
-    ${PROJECT_SOURCE_DIR}/include/redactly/OutputPlan.hpp
-    ${PROJECT_SOURCE_DIR}/include/redactly/PathSafety.hpp
-    ${PROJECT_SOURCE_DIR}/include/redactly/PathUtil.hpp
-    ${PROJECT_SOURCE_DIR}/include/redactly/PlateDetector.hpp
-    ${PROJECT_SOURCE_DIR}/include/redactly/ProcessorWorker.hpp
-    ${PROJECT_SOURCE_DIR}/include/redactly/ReviewTypes.hpp
-    ${PROJECT_SOURCE_DIR}/include/redactly/SceneCut.hpp
-    ${PROJECT_SOURCE_DIR}/include/redactly/ScrfdFaceDetector.hpp
-    ${PROJECT_SOURCE_DIR}/include/redactly/Tracking.hpp
-    ${PROJECT_SOURCE_DIR}/include/redactly/VideoIo.hpp
-    ${PROJECT_SOURCE_DIR}/include/redactly/VideoProcessor.hpp
-    ${PROJECT_SOURCE_DIR}/include/redactly/VideoReviewTypes.hpp
+    ${PROJECT_SOURCE_DIR}/include/cloakframe/DetectionGeometry.hpp
+    ${PROJECT_SOURCE_DIR}/include/cloakframe/Detector.hpp
+    ${PROJECT_SOURCE_DIR}/include/cloakframe/FaceDetection.hpp
+    ${PROJECT_SOURCE_DIR}/include/cloakframe/ImageIo.hpp
+    ${PROJECT_SOURCE_DIR}/include/cloakframe/ImageScanner.hpp
+    ${PROJECT_SOURCE_DIR}/include/cloakframe/MemoryBudget.hpp
+    ${PROJECT_SOURCE_DIR}/include/cloakframe/ModelCatalog.hpp
+    ${PROJECT_SOURCE_DIR}/include/cloakframe/Mosaic.hpp
+    ${PROJECT_SOURCE_DIR}/include/cloakframe/OnnxGraphPatch.hpp
+    ${PROJECT_SOURCE_DIR}/include/cloakframe/OrderedParallel.hpp
+    ${PROJECT_SOURCE_DIR}/include/cloakframe/OrtAcceleration.hpp
+    ${PROJECT_SOURCE_DIR}/include/cloakframe/OutputPlan.hpp
+    ${PROJECT_SOURCE_DIR}/include/cloakframe/PathSafety.hpp
+    ${PROJECT_SOURCE_DIR}/include/cloakframe/PathUtil.hpp
+    ${PROJECT_SOURCE_DIR}/include/cloakframe/PlateDetector.hpp
+    ${PROJECT_SOURCE_DIR}/include/cloakframe/ProcessorWorker.hpp
+    ${PROJECT_SOURCE_DIR}/include/cloakframe/ReviewTypes.hpp
+    ${PROJECT_SOURCE_DIR}/include/cloakframe/SceneCut.hpp
+    ${PROJECT_SOURCE_DIR}/include/cloakframe/ScrfdFaceDetector.hpp
+    ${PROJECT_SOURCE_DIR}/include/cloakframe/Tracking.hpp
+    ${PROJECT_SOURCE_DIR}/include/cloakframe/VideoIo.hpp
+    ${PROJECT_SOURCE_DIR}/include/cloakframe/VideoProcessor.hpp
+    ${PROJECT_SOURCE_DIR}/include/cloakframe/VideoReviewTypes.hpp
 )
 
-target_include_directories(redactly_core PUBLIC ${PROJECT_SOURCE_DIR}/include)
-target_link_libraries(redactly_core PUBLIC
+target_include_directories(cloakframe_core PUBLIC ${PROJECT_SOURCE_DIR}/include)
+target_link_libraries(cloakframe_core PUBLIC
     Qt6::Core
     Qt6::Gui
     Qt6::Network
@@ -64,18 +64,18 @@ target_link_libraries(redactly_core PUBLIC
 )
 
 if(WIN32)
-    target_link_libraries(redactly_core PUBLIC advapi32)
+    target_link_libraries(cloakframe_core PUBLIC advapi32)
 endif()
 
-if(REDACTLY_EXIV2_TARGET)
-    target_link_libraries(redactly_core PUBLIC ${REDACTLY_EXIV2_TARGET})
-    target_compile_definitions(redactly_core PUBLIC REDACTLY_HAVE_EXIV2)
-    message(STATUS "Redactly: metadata preservation enabled (${REDACTLY_EXIV2_TARGET})")
+if(CLOAKFRAME_EXIV2_TARGET)
+    target_link_libraries(cloakframe_core PUBLIC ${CLOAKFRAME_EXIV2_TARGET})
+    target_compile_definitions(cloakframe_core PUBLIC CLOAKFRAME_HAVE_EXIV2)
+    message(STATUS "CloakFrame: metadata preservation enabled (${CLOAKFRAME_EXIV2_TARGET})")
 else()
     message(WARNING "exiv2 not found; building without metadata preservation.")
 endif()
 
-qt_add_executable(Redactly ${REDACTLY_APP_OPTIONS}
+qt_add_executable(CloakFrame ${CLOAKFRAME_APP_OPTIONS}
     main.cpp
     MainWindow.cpp
     ModelDownloader.cpp
@@ -84,69 +84,69 @@ qt_add_executable(Redactly ${REDACTLY_APP_OPTIONS}
     Theme.cpp
     UpdateChecker.cpp
     VideoReviewDialog.cpp
-    ${PROJECT_SOURCE_DIR}/include/redactly/MainWindow.hpp
-    ${PROJECT_SOURCE_DIR}/include/redactly/ModelDownloader.hpp
-    ${PROJECT_SOURCE_DIR}/include/redactly/ReviewDialog.hpp
-    ${PROJECT_SOURCE_DIR}/include/redactly/SettingsDialog.hpp
-    ${PROJECT_SOURCE_DIR}/include/redactly/Theme.hpp
-    ${PROJECT_SOURCE_DIR}/include/redactly/UpdateChecker.hpp
-    ${PROJECT_SOURCE_DIR}/include/redactly/VideoReviewDialog.hpp
-    ${REDACTLY_APP_RESOURCES}
+    ${PROJECT_SOURCE_DIR}/include/cloakframe/MainWindow.hpp
+    ${PROJECT_SOURCE_DIR}/include/cloakframe/ModelDownloader.hpp
+    ${PROJECT_SOURCE_DIR}/include/cloakframe/ReviewDialog.hpp
+    ${PROJECT_SOURCE_DIR}/include/cloakframe/SettingsDialog.hpp
+    ${PROJECT_SOURCE_DIR}/include/cloakframe/Theme.hpp
+    ${PROJECT_SOURCE_DIR}/include/cloakframe/UpdateChecker.hpp
+    ${PROJECT_SOURCE_DIR}/include/cloakframe/VideoReviewDialog.hpp
+    ${CLOAKFRAME_APP_RESOURCES}
 )
 
 if(WIN32)
-    target_sources(Redactly PRIVATE ${PROJECT_SOURCE_DIR}/assets/Redactly.rc)
+    target_sources(CloakFrame PRIVATE ${PROJECT_SOURCE_DIR}/assets/CloakFrame.rc)
 endif()
 
-set_target_properties(Redactly PROPERTIES
+set_target_properties(CloakFrame PROPERTIES
     RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}"
 )
 
-target_compile_definitions(Redactly PRIVATE REDACTLY_VERSION="${PROJECT_VERSION}")
-target_link_libraries(Redactly PRIVATE
-    redactly_core
+target_compile_definitions(CloakFrame PRIVATE CLOAKFRAME_VERSION="${PROJECT_VERSION}")
+target_link_libraries(CloakFrame PRIVATE
+    cloakframe_core
     Qt6::Widgets
     Qt6::Network
 )
 
 if(TARGET Qt6::Svg)
-    target_link_libraries(Redactly PRIVATE Qt6::Svg)
-    target_compile_definitions(Redactly PRIVATE REDACTLY_HAVE_SVG)
-    message(STATUS "Redactly: SVG settings icon enabled")
+    target_link_libraries(CloakFrame PRIVATE Qt6::Svg)
+    target_compile_definitions(CloakFrame PRIVATE CLOAKFRAME_HAVE_SVG)
+    message(STATUS "CloakFrame: SVG settings icon enabled")
 else()
-    message(STATUS "Redactly: Qt Svg not found; using a text glyph for the settings icon")
+    message(STATUS "CloakFrame: Qt Svg not found; using a text glyph for the settings icon")
 endif()
 
 if(Qt6LinguistTools_FOUND)
-    qt_add_translations(Redactly
-        TS_FILES ${PROJECT_SOURCE_DIR}/translations/redactly_ko.ts
-                 ${PROJECT_SOURCE_DIR}/translations/redactly_ja.ts
-                 ${PROJECT_SOURCE_DIR}/translations/redactly_zh_CN.ts
+    qt_add_translations(CloakFrame
+        TS_FILES ${PROJECT_SOURCE_DIR}/translations/cloakframe_ko.ts
+                 ${PROJECT_SOURCE_DIR}/translations/cloakframe_ja.ts
+                 ${PROJECT_SOURCE_DIR}/translations/cloakframe_zh_CN.ts
     )
 else()
     message(WARNING "Qt LinguistTools not found; building without embedded translations (English only).")
 endif()
 
-redactly_harden(redactly_core)
-redactly_harden(Redactly)
+cloakframe_harden(cloakframe_core)
+cloakframe_harden(CloakFrame)
 
 if(APPLE)
-    set_target_properties(Redactly PROPERTIES
-        MACOSX_BUNDLE_GUI_IDENTIFIER "com.redactly.app"
-        MACOSX_BUNDLE_BUNDLE_NAME "Redactly"
+    set_target_properties(CloakFrame PROPERTIES
+        MACOSX_BUNDLE_GUI_IDENTIFIER "com.cloakframe.app"
+        MACOSX_BUNDLE_BUNDLE_NAME "CloakFrame"
         MACOSX_BUNDLE_SHORT_VERSION_STRING "${PROJECT_VERSION}"
         MACOSX_BUNDLE_BUNDLE_VERSION "${PROJECT_VERSION}"
-        MACOSX_BUNDLE_ICON_FILE "Redactly.icns"
+        MACOSX_BUNDLE_ICON_FILE "CloakFrame.icns"
     )
 endif()
 
-install(TARGETS Redactly
+install(TARGETS CloakFrame
     BUNDLE DESTINATION .
     RUNTIME DESTINATION bin
 )
 
 if(UNIX AND NOT APPLE)
-    install(FILES ${PROJECT_SOURCE_DIR}/assets/redactly.desktop DESTINATION share/applications)
-    install(FILES ${PROJECT_SOURCE_DIR}/assets/redactly-512.png
-        DESTINATION share/icons/hicolor/512x512/apps RENAME redactly.png)
+    install(FILES ${PROJECT_SOURCE_DIR}/assets/cloakframe.desktop DESTINATION share/applications)
+    install(FILES ${PROJECT_SOURCE_DIR}/assets/cloakframe-512.png
+        DESTINATION share/icons/hicolor/512x512/apps RENAME cloakframe.png)
 endif()

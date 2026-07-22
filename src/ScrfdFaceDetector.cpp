@@ -1,6 +1,6 @@
-#include "redactly/ScrfdFaceDetector.hpp"
+#include "cloakframe/ScrfdFaceDetector.hpp"
 
-#include "redactly/OnnxGraphPatch.hpp"
+#include "cloakframe/OnnxGraphPatch.hpp"
 
 #include <opencv2/imgproc.hpp>
 
@@ -18,7 +18,7 @@
 #include <string>
 #include <thread>
 
-namespace redactly
+namespace cloakframe
 {
     namespace
     {
@@ -72,7 +72,7 @@ namespace redactly
                                          bool enableAcceleration,
                                          const QByteArray &expectedSha256)
         : inputSize_(inputSize),
-          env_(ORT_LOGGING_LEVEL_WARNING, "Redactly"),
+          env_(ORT_LOGGING_LEVEL_WARNING, "CloakFrame"),
           sessionOptions_(),
           session_(nullptr)
     {

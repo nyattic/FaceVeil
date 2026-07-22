@@ -1,4 +1,4 @@
-#include "redactly/SettingsDialog.hpp"
+#include "cloakframe/SettingsDialog.hpp"
 
 #include <QCheckBox>
 #include <QComboBox>
@@ -9,7 +9,7 @@
 #include <QPushButton>
 #include <QVBoxLayout>
 
-namespace redactly
+namespace cloakframe
 {
     SettingsDialog::SettingsDialog(ThemeMode theme, const QString &language, bool checkForUpdates,
                                    bool fileLogging, bool gpuAcceleration, int videoQuality,

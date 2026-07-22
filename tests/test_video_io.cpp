@@ -1,5 +1,5 @@
-#include "redactly/VideoIo.hpp"
-#include "redactly/VideoProcessor.hpp"
+#include "cloakframe/VideoIo.hpp"
+#include "cloakframe/VideoProcessor.hpp"
 
 #include <atomic>
 
@@ -19,7 +19,7 @@ namespace
 {
     constexpr int kSkipExitCode = 77;
 
-    bool generateSample(const redactly::FfmpegTools &tools, const QString &path,
+    bool generateSample(const cloakframe::FfmpegTools &tools, const QString &path,
                         int durationSeconds = 2)
     {
         const QString duration = QString::number(durationSeconds);
@@ -28,7 +28,7 @@ namespace
                       {"-v", "error", "-y",
                        "-f", "lavfi", "-i", "testsrc2=size=320x240:rate=30:duration=" + duration,
                        "-f", "lavfi", "-i", "sine=frequency=440:duration=" + duration,
-                       "-metadata", "title=RedactlyTestTitle",
+                       "-metadata", "title=CloakFrameTestTitle",
                        "-metadata", "location=+37.5665+126.9780/",
                        "-c:v", "libx264", "-pix_fmt", "yuv420p",
                        "-c:a", "aac", "-shortest", path});
@@ -40,7 +40,7 @@ namespace
         return process.exitStatus() == QProcess::NormalExit && process.exitCode() == 0;
     }
 
-    QString rawProbeOutput(const redactly::FfmpegTools &tools, const QString &path)
+    QString rawProbeOutput(const cloakframe::FfmpegTools &tools, const QString &path)
     {
         QProcess process;
         process.start(tools.ffprobePath,
@@ -53,73 +53,73 @@ namespace
 
     void testUnsupportedReasons()
     {
-        redactly::VideoInfo info;
+        cloakframe::VideoInfo info;
         info.width = 1920;
         info.height = 1080;
         info.fpsNum = 30;
         info.fpsDen = 1;
         info.videoCodec = "h264";
         info.pixelFormat = "yuv420p";
-        assert(redactly::videoUnsupportedReason(info).isEmpty());
+        assert(cloakframe::videoUnsupportedReason(info).isEmpty());
 
         info.width = 3840;
         info.height = 2160;
         info.fpsNum = 60;
-        assert(redactly::videoUnsupportedReason(info).isEmpty());
+        assert(cloakframe::videoUnsupportedReason(info).isEmpty());
         info.width = 1920;
         info.height = 1080;
         info.fpsNum = 30;
 
         info.videoCodec = "hevc";
-        assert(redactly::videoUnsupportedReason(info).isEmpty());
+        assert(cloakframe::videoUnsupportedReason(info).isEmpty());
 
         info.videoCodec = "vp9";
-        assert(!redactly::videoUnsupportedReason(info).isEmpty());
+        assert(!cloakframe::videoUnsupportedReason(info).isEmpty());
         info.videoCodec = "h264";
 
         info.pixelFormat = "yuv420p10le";
-        assert(!redactly::videoUnsupportedReason(info).isEmpty());
+        assert(!cloakframe::videoUnsupportedReason(info).isEmpty());
         info.pixelFormat = "yuv420p";
 
         info.colorTransfer = "smpte2084";
-        assert(!redactly::videoUnsupportedReason(info).isEmpty());
+        assert(!cloakframe::videoUnsupportedReason(info).isEmpty());
         info.colorTransfer.clear();
 
         info.fpsNum = 0;
-        assert(!redactly::videoUnsupportedReason(info).isEmpty());
+        assert(!cloakframe::videoUnsupportedReason(info).isEmpty());
 
         info.fpsNum = 30;
-        info.width = redactly::kMaxVideoDimension + 1;
-        assert(!redactly::videoUnsupportedReason(info).isEmpty());
+        info.width = cloakframe::kMaxVideoDimension + 1;
+        assert(!cloakframe::videoUnsupportedReason(info).isEmpty());
         info.width = 1920;
 
         info.fpsNum = 241;
-        assert(!redactly::videoUnsupportedReason(info).isEmpty());
+        assert(!cloakframe::videoUnsupportedReason(info).isEmpty());
         info.fpsNum = 30;
 
-        info.durationSeconds = redactly::kMaxVideoDurationSeconds + 1.0;
-        assert(!redactly::videoUnsupportedReason(info).isEmpty());
+        info.durationSeconds = cloakframe::kMaxVideoDurationSeconds + 1.0;
+        assert(!cloakframe::videoUnsupportedReason(info).isEmpty());
         info.durationSeconds = 0.0;
 
-        info.estimatedFrameCount = redactly::kMaxVideoFrameCount + 1;
-        assert(!redactly::videoUnsupportedReason(info).isEmpty());
+        info.estimatedFrameCount = cloakframe::kMaxVideoFrameCount + 1;
+        assert(!cloakframe::videoUnsupportedReason(info).isEmpty());
     }
 
     void testSupportedExtensions()
     {
-        assert(redactly::isSupportedVideo("clip.mp4"));
-        assert(redactly::isSupportedVideo("CLIP.MOV"));
-        assert(redactly::isSupportedVideo("clip.m4v"));
-        assert(!redactly::isSupportedVideo("clip.webm"));
-        assert(!redactly::isSupportedVideo("clip.mkv"));
-        assert(!redactly::isSupportedVideo("clip.jpg"));
+        assert(cloakframe::isSupportedVideo("clip.mp4"));
+        assert(cloakframe::isSupportedVideo("CLIP.MOV"));
+        assert(cloakframe::isSupportedVideo("clip.m4v"));
+        assert(!cloakframe::isSupportedVideo("clip.webm"));
+        assert(!cloakframe::isSupportedVideo("clip.mkv"));
+        assert(!cloakframe::isSupportedVideo("clip.jpg"));
     }
 
     void testCrfPresets()
     {
-        assert(redactly::crfForQuality(redactly::VideoQuality::HighQuality) == 18);
-        assert(redactly::crfForQuality(redactly::VideoQuality::Balanced) == 21);
-        assert(redactly::crfForQuality(redactly::VideoQuality::SpaceSaver) == 24);
+        assert(cloakframe::crfForQuality(cloakframe::VideoQuality::HighQuality) == 18);
+        assert(cloakframe::crfForQuality(cloakframe::VideoQuality::Balanced) == 21);
+        assert(cloakframe::crfForQuality(cloakframe::VideoQuality::SpaceSaver) == 24);
     }
 
     void testWeakVideoDetectionsCannotBecomeStrongTracks()
@@ -128,10 +128,10 @@ namespace
         {
             return std::abs(actual - expected) < 0.0001F;
         };
-        assert(close(redactly::videoStrongScoreThreshold(0.05F), 0.35F));
-        assert(close(redactly::videoStrongScoreThreshold(0.20F), 0.35F));
-        assert(close(redactly::videoStrongScoreThreshold(0.50F), 0.40F));
-        assert(close(redactly::videoStrongScoreThreshold(0.90F), 0.80F));
+        assert(close(cloakframe::videoStrongScoreThreshold(0.05F), 0.35F));
+        assert(close(cloakframe::videoStrongScoreThreshold(0.20F), 0.35F));
+        assert(close(cloakframe::videoStrongScoreThreshold(0.50F), 0.40F));
+        assert(close(cloakframe::videoStrongScoreThreshold(0.90F), 0.80F));
     }
 
     void testVideoMaskingPlanIsBoundedByWorkersAndBytes()
@@ -140,33 +140,33 @@ namespace
         constexpr qint64 performanceBudget = 1024LL * 1024 * 1024;
         constexpr qint64 headroom = 48LL * 1024 * 1024;
 
-        const auto fullHd = redactly::videoMaskingPlan(1920, 1080, 64,
+        const auto fullHd = cloakframe::videoMaskingPlan(1920, 1080, 64,
                                                        constrainedBudget);
         assert(fullHd.workerCount <= 8);
         assert(fullHd.batchFrames <= 16);
         assert(fullHd.batchFrames * fullHd.frameBytes + headroom <= constrainedBudget);
 
-        const auto constrainedFourK = redactly::videoMaskingPlan(
+        const auto constrainedFourK = cloakframe::videoMaskingPlan(
             3840, 2160, 64, constrainedBudget);
         assert(constrainedFourK.workerCount == 3);
         assert(constrainedFourK.batchFrames == 3);
         assert(constrainedFourK.batchFrames * constrainedFourK.frameBytes + headroom <=
                constrainedBudget);
 
-        const auto performanceFourK = redactly::videoMaskingPlan(
+        const auto performanceFourK = cloakframe::videoMaskingPlan(
             3840, 2160, 64, performanceBudget);
         assert(performanceFourK.workerCount == 8);
         assert(performanceFourK.batchFrames == 15);
         assert(performanceFourK.batchFrames * performanceFourK.frameBytes + headroom <=
                performanceBudget);
 
-        const auto eightK = redactly::videoMaskingPlan(7680, 4320, 64,
+        const auto eightK = cloakframe::videoMaskingPlan(7680, 4320, 64,
                                                        performanceBudget);
         assert(eightK.workerCount == 3);
         assert(eightK.batchFrames == 3);
         assert(eightK.batchFrames * eightK.frameBytes + headroom <= performanceBudget);
 
-        const auto unknownCpuCount = redactly::videoMaskingPlan(
+        const auto unknownCpuCount = cloakframe::videoMaskingPlan(
             320, 240, 0, constrainedBudget);
         assert(unknownCpuCount.workerCount == 1);
         assert(unknownCpuCount.batchFrames == 2);
@@ -189,7 +189,7 @@ int main(int argc, char **argv)
     std::puts("bounded video masking plan: ok");
 
     QString locateError;
-    const auto tools = redactly::locateFfmpegTools(&locateError);
+    const auto tools = cloakframe::locateFfmpegTools(&locateError);
     if (!tools)
     {
         std::printf("SKIP: %s\n", locateError.toUtf8().constData());
@@ -205,7 +205,7 @@ int main(int argc, char **argv)
     const auto stagingLeftovers = [](const QString &dirPath)
     {
         return QDir(dirPath)
-            .entryList({QStringLiteral(".redactly-*")},
+            .entryList({QStringLiteral(".cloakframe-*")},
                        QDir::AllEntries | QDir::Hidden | QDir::NoDotAndDotDot)
             .size();
     };
@@ -214,7 +214,7 @@ int main(int argc, char **argv)
     std::puts("sample generated: ok");
 
     QString probeError;
-    const auto info = redactly::probeVideo(*tools, samplePath, &probeError);
+    const auto info = cloakframe::probeVideo(*tools, samplePath, &probeError);
     assert(info.has_value());
     assert(info->width == 320);
     assert(info->height == 240);
@@ -223,16 +223,16 @@ int main(int argc, char **argv)
     assert(info->hasAudio);
     assert(info->audioCodec == "aac");
     assert(!info->isVfr);
-    assert(redactly::videoUnsupportedReason(*info).isEmpty());
+    assert(cloakframe::videoUnsupportedReason(*info).isEmpty());
     assert(info->estimatedFrameCount >= 55 && info->estimatedFrameCount <= 65);
     std::puts("probe: ok");
 
-    redactly::VideoFrameReader reader;
+    cloakframe::VideoFrameReader reader;
     assert(reader.open(*tools, samplePath, *info));
 
-    redactly::VideoFrameWriter writer;
+    cloakframe::VideoFrameWriter writer;
     assert(writer.open(*tools, outputPath, samplePath, *info,
-                       redactly::crfForQuality(redactly::VideoQuality::HighQuality)));
+                       cloakframe::crfForQuality(cloakframe::VideoQuality::HighQuality)));
 
     int frameCount = 0;
     cv::Mat frame;
@@ -250,12 +250,12 @@ int main(int argc, char **argv)
 
     {
         const QString guardedPath = tempDir.filePath("out/guarded.mp4");
-        redactly::VideoFrameWriter guardedWriter;
+        cloakframe::VideoFrameWriter guardedWriter;
         assert(guardedWriter.open(*tools, guardedPath, samplePath, *info,
-                                  redactly::crfForQuality(
-                                      redactly::VideoQuality::SpaceSaver),
+                                  cloakframe::crfForQuality(
+                                      cloakframe::VideoQuality::SpaceSaver),
                                   false));
-        redactly::VideoFrameReader guardedReader;
+        cloakframe::VideoFrameReader guardedReader;
         assert(guardedReader.open(*tools, samplePath, *info));
         cv::Mat guardedFrame;
         assert(guardedReader.readFrame(guardedFrame));
@@ -266,7 +266,7 @@ int main(int argc, char **argv)
         std::puts("video publish guard: ok");
     }
 
-    const auto outInfo = redactly::probeVideo(*tools, outputPath, &probeError);
+    const auto outInfo = cloakframe::probeVideo(*tools, outputPath, &probeError);
     assert(outInfo.has_value());
     assert(outInfo->width == 320);
     assert(outInfo->height == 240);
@@ -276,12 +276,12 @@ int main(int argc, char **argv)
     assert(outInfo->durationSeconds > 1.5 && outInfo->durationSeconds < 2.5);
 
     const QString rawOutput = rawProbeOutput(*tools, outputPath);
-    assert(!rawOutput.contains("RedactlyTestTitle"));
+    assert(!rawOutput.contains("CloakFrameTestTitle"));
     assert(!rawOutput.contains("37.5665"));
     std::puts("output verification: ok");
 
     {
-        redactly::VideoInfo fourKInfo = *info;
+        cloakframe::VideoInfo fourKInfo = *info;
         fourKInfo.width = 3840;
         fourKInfo.height = 2160;
         fourKInfo.rotation = 0;
@@ -291,10 +291,10 @@ int main(int argc, char **argv)
         fourKInfo.estimatedFrameCount = 3;
 
         const QString fourKPath = tempDir.filePath("out/4k60-source.mp4");
-        redactly::VideoFrameWriter fourKWriter;
+        cloakframe::VideoFrameWriter fourKWriter;
         assert(fourKWriter.open(
             *tools, fourKPath, samplePath, fourKInfo,
-            redactly::crfForQuality(redactly::VideoQuality::SpaceSaver), false));
+            cloakframe::crfForQuality(cloakframe::VideoQuality::SpaceSaver), false));
         cv::Mat fourKFrame(2160, 3840, CV_8UC3);
         for (int frameIndex = 0; frameIndex < 3; ++frameIndex)
         {
@@ -305,23 +305,23 @@ int main(int argc, char **argv)
         }
         assert(fourKWriter.finish());
 
-        const auto fourKProbe = redactly::probeVideo(*tools, fourKPath, &probeError);
+        const auto fourKProbe = cloakframe::probeVideo(*tools, fourKPath, &probeError);
         assert(fourKProbe.has_value());
         assert(fourKProbe->displayWidth() == 3840);
         assert(fourKProbe->displayHeight() == 2160);
         assert(fourKProbe->fpsNum == 60 && fourKProbe->fpsDen == 1);
-        assert(redactly::videoUnsupportedReason(*fourKProbe).isEmpty());
+        assert(cloakframe::videoUnsupportedReason(*fourKProbe).isEmpty());
 
         const QString fourKOutput = tempDir.filePath("out/4k60-processed.mp4");
-        redactly::VideoProcessOptions fourKOptions;
+        cloakframe::VideoProcessOptions fourKOptions;
         fourKOptions.hardwareEncoder = false;
         std::atomic<bool> fourKCancelled{false};
-        const auto fourKResult = redactly::processVideo(
+        const auto fourKResult = cloakframe::processVideo(
             *tools, fourKPath, fourKOutput, *fourKProbe, fourKOptions, {},
             fourKCancelled);
-        assert(fourKResult.status == redactly::VideoProcessStatus::Completed);
+        assert(fourKResult.status == cloakframe::VideoProcessStatus::Completed);
         assert(fourKResult.frameCount == 3);
-        const auto processedFourK = redactly::probeVideo(
+        const auto processedFourK = cloakframe::probeVideo(
             *tools, fourKOutput, &probeError);
         assert(processedFourK.has_value());
         assert(processedFourK->displayWidth() == 3840);
@@ -339,12 +339,12 @@ int main(int argc, char **argv)
         if (encoderList.contains("libx265"))
         {
             const QString hevcPath = tempDir.filePath("out/hevc.mp4");
-            redactly::VideoFrameReader hevcReader;
+            cloakframe::VideoFrameReader hevcReader;
             assert(hevcReader.open(*tools, samplePath, *info));
-            redactly::VideoFrameWriter hevcWriter;
+            cloakframe::VideoFrameWriter hevcWriter;
             assert(hevcWriter.open(*tools, hevcPath, samplePath, *info,
-                                   redactly::crfForQuality(redactly::VideoQuality::Balanced),
-                                   false, redactly::VideoCodec::Hevc));
+                                   cloakframe::crfForQuality(cloakframe::VideoQuality::Balanced),
+                                   false, cloakframe::VideoCodec::Hevc));
             assert(hevcWriter.encoderName() == "libx265");
             cv::Mat hevcFrame;
             while (hevcReader.readFrame(hevcFrame))
@@ -353,7 +353,7 @@ int main(int argc, char **argv)
             }
             assert(hevcWriter.finish());
 
-            const auto hevcInfo = redactly::probeVideo(*tools, hevcPath, &probeError);
+            const auto hevcInfo = cloakframe::probeVideo(*tools, hevcPath, &probeError);
             assert(hevcInfo.has_value());
             assert(hevcInfo->videoCodec == "hevc");
             assert(hevcInfo->hasAudio);
@@ -374,9 +374,9 @@ int main(int argc, char **argv)
         existing.close();
 
         std::atomic<bool> cancelled{false};
-        const auto result = redactly::processVideo(
+        const auto result = cloakframe::processVideo(
             *tools, samplePath, existingPath, *info, {}, {}, cancelled);
-        assert(result.status == redactly::VideoProcessStatus::Failed);
+        assert(result.status == cloakframe::VideoProcessStatus::Failed);
         assert(result.error.contains("already exists"));
         assert(existing.open(QIODevice::ReadOnly));
         assert(existing.readAll() == "keep-existing-output");
@@ -390,7 +390,7 @@ int main(int argc, char **argv)
         assert(bogus.write("this is not a video file") > 0);
     }
     QString corruptError;
-    const auto corruptInfo = redactly::probeVideo(*tools, bogusPath, &corruptError);
+    const auto corruptInfo = cloakframe::probeVideo(*tools, bogusPath, &corruptError);
     assert(!corruptInfo.has_value());
     assert(!corruptError.isEmpty());
     std::puts("corrupt input rejection: ok");
@@ -404,13 +404,13 @@ int main(int argc, char **argv)
     remux.waitForFinished(60000);
     if (remux.exitStatus() == QProcess::NormalExit && remux.exitCode() == 0)
     {
-        const auto rotatedInfo = redactly::probeVideo(*tools, rotatedPath, &probeError);
+        const auto rotatedInfo = cloakframe::probeVideo(*tools, rotatedPath, &probeError);
         assert(rotatedInfo.has_value());
         assert(rotatedInfo->rotation == 90 || rotatedInfo->rotation == 270);
         assert(rotatedInfo->displayWidth() == 240);
         assert(rotatedInfo->displayHeight() == 320);
 
-        redactly::VideoFrameReader rotatedReader;
+        cloakframe::VideoFrameReader rotatedReader;
         assert(rotatedReader.open(*tools, rotatedPath, *rotatedInfo));
         cv::Mat rotatedFrame;
         assert(rotatedReader.readFrame(rotatedFrame));
@@ -418,14 +418,14 @@ int main(int argc, char **argv)
         assert(rotatedFrame.rows == 320);
         rotatedReader.close();
 
-        redactly::VideoFrameWriter rotatedWriter;
+        cloakframe::VideoFrameWriter rotatedWriter;
         assert(rotatedWriter.open(*tools, tempDir.filePath("rotated-out.mp4"),
                                   rotatedPath, *rotatedInfo,
-                                  redactly::crfForQuality(redactly::VideoQuality::SpaceSaver)));
+                                  cloakframe::crfForQuality(cloakframe::VideoQuality::SpaceSaver)));
         assert(rotatedWriter.writeFrame(rotatedFrame));
         assert(rotatedWriter.finish());
 
-        const auto rotatedOut = redactly::probeVideo(
+        const auto rotatedOut = cloakframe::probeVideo(
             *tools, tempDir.filePath("rotated-out.mp4"), &probeError);
         assert(rotatedOut.has_value());
         assert(rotatedOut->rotation == 0);
@@ -439,7 +439,7 @@ int main(int argc, char **argv)
     }
 
     {
-        redactly::VideoFrameReader smallReader;
+        cloakframe::VideoFrameReader smallReader;
         assert(smallReader.open(*tools, samplePath, *info, 160));
         assert(smallReader.frameWidth() == 160);
         assert(smallReader.frameHeight() == 120);
@@ -453,7 +453,7 @@ int main(int argc, char **argv)
         const QString processedPath = tempDir.filePath("processed.mp4");
         std::atomic<bool> cancelled{false};
         qint64 lastPass2Frame = 0;
-        const auto result = redactly::processVideo(
+        const auto result = cloakframe::processVideo(
             *tools, samplePath, processedPath, *info, {}, {}, cancelled,
             [&](int pass, qint64 frameIndex, qint64)
             {
@@ -462,12 +462,12 @@ int main(int argc, char **argv)
                     lastPass2Frame = frameIndex;
                 }
             });
-        assert(result.status == redactly::VideoProcessStatus::Completed);
+        assert(result.status == cloakframe::VideoProcessStatus::Completed);
         assert(result.trackCount == 0);
         assert(result.frameCount >= 55 && result.frameCount <= 65);
         assert(lastPass2Frame == result.frameCount);
 
-        const auto processedInfo = redactly::probeVideo(*tools, processedPath, &probeError);
+        const auto processedInfo = cloakframe::probeVideo(*tools, processedPath, &probeError);
         assert(processedInfo.has_value());
         assert(processedInfo->videoCodec == "h264");
         assert(processedInfo->hasAudio);
@@ -475,38 +475,38 @@ int main(int argc, char **argv)
     }
 
     {
-        redactly::VideoProcessOptions options;
+        cloakframe::VideoProcessOptions options;
         options.analysisLongEdge = 160;
-        options.method = redactly::AnonymizationMethod::Fill;
+        options.method = cloakframe::AnonymizationMethod::Fill;
         options.paddingRatio = 0.0F;
         const QString scaledPath = tempDir.filePath("scaled.mp4");
         std::atomic<bool> cancelled{false};
         bool reviewCalled = false;
-        const auto result = redactly::processVideo(
+        const auto result = cloakframe::processVideo(
             *tools, samplePath, scaledPath, *info, options,
             [](const cv::Mat &frame)
             {
                 assert(frame.cols == 160 && frame.rows == 120);
-                redactly::FaceDetections detections;
+                cloakframe::FaceDetections detections;
                 detections.push_back({cv::Rect2f(40.0F, 30.0F, 80.0F, 60.0F), 0.9F});
                 return detections;
             },
             cancelled, {},
-            [&](std::vector<redactly::Track> &tracks, qint64 frameCount,
-                const QString &, const redactly::VideoInfo &)
+            [&](std::vector<cloakframe::Track> &tracks, qint64 frameCount,
+                const QString &, const cloakframe::VideoInfo &)
             {
                 reviewCalled = true;
                 assert(frameCount >= 55 && frameCount <= 65);
                 assert(tracks.size() == 1);
                 return true;
             });
-        assert(result.status == redactly::VideoProcessStatus::Completed);
+        assert(result.status == cloakframe::VideoProcessStatus::Completed);
         assert(result.trackCount == 1);
         assert(reviewCalled);
 
-        const auto scaledInfo = redactly::probeVideo(*tools, scaledPath, &probeError);
+        const auto scaledInfo = cloakframe::probeVideo(*tools, scaledPath, &probeError);
         assert(scaledInfo.has_value());
-        redactly::VideoFrameReader outputReader;
+        cloakframe::VideoFrameReader outputReader;
         assert(outputReader.open(*tools, scaledPath, *scaledInfo));
         cv::Mat outputFrame;
         assert(outputReader.readFrame(outputFrame));
@@ -521,22 +521,22 @@ int main(int argc, char **argv)
         const QString reviewCancelledPath = tempDir.filePath("review-cancelled.mp4");
         std::atomic<bool> cancelled{false};
         bool reviewCalled = false;
-        const auto result = redactly::processVideo(
+        const auto result = cloakframe::processVideo(
             *tools, samplePath, reviewCancelledPath, *info, {},
             [](const cv::Mat &)
             {
-                return redactly::FaceDetections{
+                return cloakframe::FaceDetections{
                     {cv::Rect2f(40.0F, 30.0F, 80.0F, 60.0F), 0.9F}};
             },
             cancelled, {},
-            [&](std::vector<redactly::Track> &, qint64, const QString &,
-                const redactly::VideoInfo &)
+            [&](std::vector<cloakframe::Track> &, qint64, const QString &,
+                const cloakframe::VideoInfo &)
             {
                 reviewCalled = true;
                 return false;
             });
         assert(reviewCalled);
-        assert(result.status == redactly::VideoProcessStatus::Cancelled);
+        assert(result.status == cloakframe::VideoProcessStatus::Cancelled);
         assert(!QFile::exists(reviewCancelledPath));
         assert(stagingLeftovers(tempDir.path()) == 0);
         std::puts("video review cancellation: ok");
@@ -548,17 +548,17 @@ int main(int argc, char **argv)
         const QString changedSourceOutput = tempDir.filePath("snapshotted-source.mp4");
         assert(QFile::copy(samplePath, replaceableSource));
         assert(generateSample(*tools, replacement, 1));
-        const auto replaceableInfo = redactly::probeVideo(
+        const auto replaceableInfo = cloakframe::probeVideo(
             *tools, replaceableSource, &probeError);
         assert(replaceableInfo.has_value());
 
         std::atomic<bool> cancelled{false};
         bool reviewCalled = false;
-        const auto result = redactly::processVideo(
+        const auto result = cloakframe::processVideo(
             *tools, replaceableSource, changedSourceOutput, *replaceableInfo, {}, {},
             cancelled, {},
-            [&](std::vector<redactly::Track> &, qint64, const QString &,
-                const redactly::VideoInfo &)
+            [&](std::vector<cloakframe::Track> &, qint64, const QString &,
+                const cloakframe::VideoInfo &)
             {
                 reviewCalled = true;
                 assert(stagingLeftovers(tempDir.path()) >= 1);
@@ -567,7 +567,7 @@ int main(int argc, char **argv)
                 return true;
             });
         assert(reviewCalled);
-        assert(result.status == redactly::VideoProcessStatus::Completed);
+        assert(result.status == cloakframe::VideoProcessStatus::Completed);
         assert(result.frameCount >= 55 && result.frameCount <= 65);
         assert(QFile::exists(changedSourceOutput));
         assert(stagingLeftovers(tempDir.path()) == 0);
@@ -576,10 +576,10 @@ int main(int argc, char **argv)
 
     {
         std::atomic<bool> cancelled{true};
-        const auto result = redactly::processVideo(
+        const auto result = cloakframe::processVideo(
             *tools, samplePath, tempDir.filePath("cancelled.mp4"), *info, {},
             {}, cancelled);
-        assert(result.status == redactly::VideoProcessStatus::Cancelled);
+        assert(result.status == cloakframe::VideoProcessStatus::Cancelled);
         assert(!QFile::exists(tempDir.filePath("cancelled.mp4")));
         std::puts("video processor cancellation: ok");
     }
@@ -587,7 +587,7 @@ int main(int argc, char **argv)
     {
         const QString pass2CancelledPath = tempDir.filePath("pass2-cancelled.mp4");
         std::atomic<bool> cancelled{false};
-        const auto result = redactly::processVideo(
+        const auto result = cloakframe::processVideo(
             *tools, samplePath, pass2CancelledPath, *info, {}, {}, cancelled,
             [&](int pass, qint64 frame, qint64)
             {
@@ -596,7 +596,7 @@ int main(int argc, char **argv)
                     cancelled.store(true, std::memory_order_release);
                 }
             });
-        assert(result.status == redactly::VideoProcessStatus::Cancelled);
+        assert(result.status == cloakframe::VideoProcessStatus::Cancelled);
         assert(!QFile::exists(pass2CancelledPath));
         std::puts("video pass-2 cancellation cleanup: ok");
     }

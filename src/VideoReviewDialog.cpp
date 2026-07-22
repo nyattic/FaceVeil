@@ -1,4 +1,4 @@
-#include "redactly/VideoReviewDialog.hpp"
+#include "cloakframe/VideoReviewDialog.hpp"
 
 #include <QDialogButtonBox>
 #include <QHBoxLayout>
@@ -19,7 +19,7 @@
 #include <cmath>
 #include <functional>
 
-namespace redactly
+namespace cloakframe
 {
     namespace
     {

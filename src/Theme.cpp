@@ -1,4 +1,4 @@
-#include "redactly/Theme.hpp"
+#include "cloakframe/Theme.hpp"
 
 #include <QApplication>
 #include <QColor>
@@ -9,14 +9,14 @@
 
 #include <algorithm>
 
-#ifdef REDACTLY_HAVE_SVG
+#ifdef CLOAKFRAME_HAVE_SVG
 #include <QPainter>
 #include <QPixmap>
 #include <QSize>
 #include <QSvgRenderer>
 #endif
 
-namespace redactly
+namespace cloakframe
 {
     namespace
     {
@@ -524,7 +524,7 @@ namespace redactly
 
     QIcon settingsGearIcon(ThemeMode mode)
     {
-#ifdef REDACTLY_HAVE_SVG
+#ifdef CLOAKFRAME_HAVE_SVG
         const bool dark = (mode == ThemeMode::Dark) ||
                           (mode == ThemeMode::System && systemPrefersDark());
         const QString color = dark ? QStringLiteral("#8B949E") : QStringLiteral("#6B7280");

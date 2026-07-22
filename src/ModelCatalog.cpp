@@ -1,24 +1,37 @@
-#include "redactly/ModelCatalog.hpp"
+#include "cloakframe/ModelCatalog.hpp"
 
 #include <QCoreApplication>
 #include <QDir>
 #include <QFileInfo>
 #include <QStandardPaths>
 
-namespace redactly
+namespace cloakframe
 {
+    namespace
+    {
+        QString dataRoot()
+        {
+            const auto base = QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation);
+            return base.isEmpty() ? QDir::homePath() : base;
+        }
+
+        QString legacyModelCacheDir()
+        {
+            return dataRoot() + "/Redactly/models";
+        }
+    }
+
     QString modelCacheDir()
     {
-        const auto base = QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation);
-        const auto root = base.isEmpty() ? QDir::homePath() : base;
-        return root + "/Redactly/models";
+        return dataRoot() + "/CloakFrame/models";
     }
 
     QString firstExistingModelPath(const QString &fileName)
     {
         const auto appDir = QCoreApplication::applicationDirPath();
-        const std::array<QString, 5> candidates = {
+        const std::array<QString, 6> candidates = {
             modelCacheDir() + "/" + fileName,
+            legacyModelCacheDir() + "/" + fileName,
             appDir + "/models/" + fileName,
             appDir + "/../Resources/models/" + fileName,
             appDir + "/../../../../models/" + fileName,

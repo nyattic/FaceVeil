@@ -7,7 +7,7 @@ from pathlib import Path
 
 PLACEHOLDER = re.compile(r"%(?:\d+|n)")
 ALLOW_SAME = {
-    "FFmpeg", "H.264", "HEVC", "NMS", "ONNX", "Redactly",
+    "FFmpeg", "H.264", "HEVC", "NMS", "ONNX", "CloakFrame",
     "%1 / %2",
 }
 
@@ -63,7 +63,7 @@ def main() -> int:
         if arg != "--strict-source-equality"
     ]
     if not catalogs:
-        catalogs = sorted(Path("translations").glob("redactly_*.ts"))
+        catalogs = sorted(Path("translations").glob("cloakframe_*.ts"))
     baseline: set[tuple[str, str]] | None = None
     failed = False
 

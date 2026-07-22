@@ -1,4 +1,4 @@
-function(redactly_onnxruntime_from_root)
+function(cloakframe_onnxruntime_from_root)
     find_path(ONNXRUNTIME_INCLUDE_DIR
         NAMES onnxruntime_cxx_api.h
         HINTS

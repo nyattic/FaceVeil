@@ -35,13 +35,13 @@ int main(int argc, char *argv[])
 
     if (argc != 2)
     {
-        spdlog::error("Usage: redactly_inspect_model <model.onnx>");
+        spdlog::error("Usage: cloakframe_inspect_model <model.onnx>");
         return 2;
     }
 
     try
     {
-        Ort::Env env(ORT_LOGGING_LEVEL_WARNING, "RedactlyInspect");
+        Ort::Env env(ORT_LOGGING_LEVEL_WARNING, "CloakFrameInspect");
         Ort::SessionOptions options;
         options.SetGraphOptimizationLevel(GraphOptimizationLevel::ORT_ENABLE_EXTENDED);
 

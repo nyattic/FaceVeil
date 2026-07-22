@@ -1,14 +1,14 @@
-#include "redactly/OutputPlan.hpp"
+#include "cloakframe/OutputPlan.hpp"
 
-#include "redactly/PathUtil.hpp"
-#include "redactly/VideoIo.hpp"
+#include "cloakframe/PathUtil.hpp"
+#include "cloakframe/VideoIo.hpp"
 
 #include <algorithm>
 #include <cctype>
 #include <system_error>
 #include <unordered_map>
 
-namespace redactly
+namespace cloakframe
 {
     namespace
     {

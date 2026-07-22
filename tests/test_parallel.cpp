@@ -1,4 +1,4 @@
-#include "redactly/OrderedParallel.hpp"
+#include "cloakframe/OrderedParallel.hpp"
 
 #include <atomic>
 #include <cassert>
@@ -15,7 +15,7 @@ namespace
         std::atomic<bool> cancelled{false};
         std::vector<std::size_t> consumed;
 
-        redactly::processOrdered<std::size_t>(
+        cloakframe::processOrdered<std::size_t>(
             count, 8, 8, cancelled,
             [](std::size_t index)
             {
@@ -44,7 +44,7 @@ namespace
         std::atomic<int> peakActive{0};
         std::size_t consumedCount = 0;
 
-        redactly::processOrdered<int>(
+        cloakframe::processOrdered<int>(
             count, 8, maxInFlight, cancelled,
             [&](std::size_t index)
             {
@@ -72,7 +72,7 @@ namespace
         std::atomic<bool> cancelled{false};
         std::size_t consumedCount = 0;
 
-        redactly::processOrdered<int>(
+        cloakframe::processOrdered<int>(
             count, 4, 4, cancelled,
             [](std::size_t index)
             {
@@ -97,13 +97,13 @@ namespace
         std::atomic<bool> cancelled{false};
         std::size_t consumedCount = 0;
 
-        redactly::processOrdered<int>(
+        cloakframe::processOrdered<int>(
             0, 4, 4, cancelled,
             [](std::size_t) { return 0; },
             [&](std::size_t, int &&) { ++consumedCount; });
         assert(consumedCount == 0);
 
-        redactly::processOrdered<int>(
+        cloakframe::processOrdered<int>(
             5, 1, 1, cancelled,
             [](std::size_t index) { return static_cast<int>(index); },
             [&](std::size_t index, int &&value)

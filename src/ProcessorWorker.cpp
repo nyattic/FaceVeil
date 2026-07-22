@@ -1,19 +1,19 @@
-#include "redactly/ProcessorWorker.hpp"
+#include "cloakframe/ProcessorWorker.hpp"
 
-#include "redactly/ImageIo.hpp"
-#include "redactly/ImageScanner.hpp"
-#include "redactly/MemoryBudget.hpp"
-#include "redactly/OrderedParallel.hpp"
-#include "redactly/OutputPlan.hpp"
-#include "redactly/PathSafety.hpp"
-#include "redactly/PathUtil.hpp"
-#include "redactly/PlateDetector.hpp"
-#include "redactly/Mosaic.hpp"
-#include "redactly/ReviewTypes.hpp"
-#include "redactly/ScrfdFaceDetector.hpp"
-#include "redactly/VideoIo.hpp"
-#include "redactly/VideoProcessor.hpp"
-#include "redactly/VideoReviewTypes.hpp"
+#include "cloakframe/ImageIo.hpp"
+#include "cloakframe/ImageScanner.hpp"
+#include "cloakframe/MemoryBudget.hpp"
+#include "cloakframe/OrderedParallel.hpp"
+#include "cloakframe/OutputPlan.hpp"
+#include "cloakframe/PathSafety.hpp"
+#include "cloakframe/PathUtil.hpp"
+#include "cloakframe/PlateDetector.hpp"
+#include "cloakframe/Mosaic.hpp"
+#include "cloakframe/ReviewTypes.hpp"
+#include "cloakframe/ScrfdFaceDetector.hpp"
+#include "cloakframe/VideoIo.hpp"
+#include "cloakframe/VideoProcessor.hpp"
+#include "cloakframe/VideoReviewTypes.hpp"
 
 #include <QCoreApplication>
 #include <QDir>
@@ -35,7 +35,7 @@
 #include <system_error>
 #include <thread>
 
-namespace redactly
+namespace cloakframe
 {
     namespace
     {
@@ -136,7 +136,7 @@ namespace redactly
                 return {
                     false,
                     QCoreApplication::translate(
-                        "redactly::ProcessorWorker",
+                        "cloakframe::ProcessorWorker",
                         "cannot inspect image dimensions"),
                     {}
                 };
@@ -148,7 +148,7 @@ namespace redactly
             {
                 return {
                     false,
-                    QCoreApplication::translate("redactly::ProcessorWorker", "image too large, %1 x %2")
+                    QCoreApplication::translate("cloakframe::ProcessorWorker", "image too large, %1 x %2")
                         .arg(size.width()).arg(size.height()),
                     size,
                     pixelLimit
@@ -845,7 +845,7 @@ namespace redactly
                     reviewReceiver_.data(),
                     "requestReview",
                     Qt::BlockingQueuedConnection,
-                    Q_RETURN_ARG(redactly::ReviewResult, reviewResult),
+                    Q_RETURN_ARG(cloakframe::ReviewResult, reviewResult),
                     Q_ARG(QImage, preview),
                     Q_ARG(QString, fileName),
                     Q_ARG(QVector<QRectF>, detectedRects),
@@ -1190,8 +1190,8 @@ namespace redactly
                     reviewReceiver_.data(),
                     "requestVideoReview",
                     Qt::BlockingQueuedConnection,
-                    Q_RETURN_ARG(redactly::VideoReviewResult, reviewResult),
-                    Q_ARG(redactly::VideoReviewRequest, request));
+                    Q_RETURN_ARG(cloakframe::VideoReviewResult, reviewResult),
+                    Q_ARG(cloakframe::VideoReviewRequest, request));
                 if (!invoked || reviewResult.decision == VideoReviewDecision::CancelAll)
                 {
                     cancelled_.store(true, std::memory_order_release);

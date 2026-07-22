@@ -1,4 +1,4 @@
-#include "redactly/UpdateChecker.hpp"
+#include "cloakframe/UpdateChecker.hpp"
 
 #include <QJsonDocument>
 #include <QJsonObject>
@@ -10,14 +10,14 @@
 
 #include <utility>
 
-namespace redactly
+namespace cloakframe
 {
     namespace
     {
         constexpr auto kReleasesApiUrl =
-                "https://api.github.com/repos/nyattic/Redactly/releases/latest";
+                "https://api.github.com/repos/nyattic/CloakFrame/releases/latest";
         constexpr auto kReleasesPageUrl =
-                "https://github.com/nyattic/Redactly/releases/latest";
+                "https://github.com/nyattic/CloakFrame/releases/latest";
 
         QString stripVersionPrefix(QString value)
         {
@@ -46,7 +46,7 @@ namespace redactly
         request.setRawHeader("Accept", "application/vnd.github+json");
         request.setRawHeader("X-GitHub-Api-Version", "2022-11-28");
         request.setHeader(QNetworkRequest::UserAgentHeader,
-                          QStringLiteral("Redactly/%1").arg(currentVersion_));
+                          QStringLiteral("CloakFrame/%1").arg(currentVersion_));
 
         QNetworkReply *reply = manager_->get(request);
         connect(reply, &QNetworkReply::finished, this, [this, reply]

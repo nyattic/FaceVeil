@@ -1,16 +1,16 @@
-#include "redactly/DetectionGeometry.hpp"
-#include "redactly/ImageIo.hpp"
-#include "redactly/ImageScanner.hpp"
-#include "redactly/Mosaic.hpp"
-#include "redactly/ModelCatalog.hpp"
-#include "redactly/OnnxGraphPatch.hpp"
-#include "redactly/OrtAcceleration.hpp"
-#include "redactly/OutputPlan.hpp"
-#include "redactly/PathSafety.hpp"
-#include "redactly/PlateDetector.hpp"
-#include "redactly/ProcessorWorker.hpp"
-#include "redactly/ReviewTypes.hpp"
-#include "redactly/ScrfdFaceDetector.hpp"
+#include "cloakframe/DetectionGeometry.hpp"
+#include "cloakframe/ImageIo.hpp"
+#include "cloakframe/ImageScanner.hpp"
+#include "cloakframe/Mosaic.hpp"
+#include "cloakframe/ModelCatalog.hpp"
+#include "cloakframe/OnnxGraphPatch.hpp"
+#include "cloakframe/OrtAcceleration.hpp"
+#include "cloakframe/OutputPlan.hpp"
+#include "cloakframe/PathSafety.hpp"
+#include "cloakframe/PlateDetector.hpp"
+#include "cloakframe/ProcessorWorker.hpp"
+#include "cloakframe/ReviewTypes.hpp"
+#include "cloakframe/ScrfdFaceDetector.hpp"
 
 #include <opencv2/core.hpp>
 #include <opencv2/imgcodecs.hpp>
@@ -42,7 +42,7 @@
 #include <sys/stat.h>
 #endif
 
-#ifdef REDACTLY_HAVE_EXIV2
+#ifdef CLOAKFRAME_HAVE_EXIV2
 #include <exiv2/exiv2.hpp>
 #endif
 
@@ -53,11 +53,11 @@ namespace
         Q_OBJECT
 
     public slots:
-        redactly::ReviewResult requestReview(const QImage &, const QString &,
+        cloakframe::ReviewResult requestReview(const QImage &, const QString &,
                                              const QVector<QRectF> &, int, int, double)
         {
-            redactly::ReviewResult result;
-            result.decision = redactly::ReviewDecision::CopyOriginal;
+            cloakframe::ReviewResult result;
+            result.decision = cloakframe::ReviewDecision::CopyOriginal;
             return result;
         }
     };
@@ -73,13 +73,13 @@ namespace
         }
 
     public slots:
-        redactly::ReviewResult requestReview(const QImage &, const QString &,
+        cloakframe::ReviewResult requestReview(const QImage &, const QString &,
                                              const QVector<QRectF> &, int, int, double)
         {
             assert(QFile::remove(source_));
             assert(QFile::rename(replacement_, source_));
-            redactly::ReviewResult result;
-            result.decision = redactly::ReviewDecision::CopyOriginal;
+            cloakframe::ReviewResult result;
+            result.decision = cloakframe::ReviewDecision::CopyOriginal;
             return result;
         }
 
@@ -90,26 +90,26 @@ namespace
 
     void testAccelerationBackendNames()
     {
-        assert(std::string(redactly::ortAcceleratorName(redactly::OrtAccelerator::None)) == "CPU");
-        assert(std::string(redactly::ortAcceleratorName(redactly::OrtAccelerator::CoreML)) == "CoreML");
-        assert(std::string(redactly::ortAcceleratorName(redactly::OrtAccelerator::DirectML)) == "DirectML");
-        assert(std::string(redactly::ortAcceleratorName(redactly::OrtAccelerator::CUDA)) == "CUDA");
-        assert(std::string(redactly::ortAcceleratorName(redactly::OrtAccelerator::MIGraphX)) == "MIGraphX");
-        assert(std::string(redactly::ortAcceleratorName(redactly::OrtAccelerator::ROCm)) == "ROCm");
+        assert(std::string(cloakframe::ortAcceleratorName(cloakframe::OrtAccelerator::None)) == "CPU");
+        assert(std::string(cloakframe::ortAcceleratorName(cloakframe::OrtAccelerator::CoreML)) == "CoreML");
+        assert(std::string(cloakframe::ortAcceleratorName(cloakframe::OrtAccelerator::DirectML)) == "DirectML");
+        assert(std::string(cloakframe::ortAcceleratorName(cloakframe::OrtAccelerator::CUDA)) == "CUDA");
+        assert(std::string(cloakframe::ortAcceleratorName(cloakframe::OrtAccelerator::MIGraphX)) == "MIGraphX");
+        assert(std::string(cloakframe::ortAcceleratorName(cloakframe::OrtAccelerator::ROCm)) == "ROCm");
     }
 
     void testBuiltinModelDigests()
     {
-        for (const auto &model: redactly::builtinModels())
+        for (const auto &model: cloakframe::builtinModels())
         {
             const QByteArray digest = QByteArray::fromHex(model.sha256.toLatin1());
-            assert(redactly::modelDigestMatches(model, digest));
+            assert(cloakframe::modelDigestMatches(model, digest));
             QByteArray changed = digest;
             changed[0] = static_cast<char>(changed[0] ^ 0x01);
-            assert(!redactly::modelDigestMatches(model, changed));
+            assert(!cloakframe::modelDigestMatches(model, changed));
         }
-        const auto &plate = redactly::plateModel();
-        assert(redactly::modelDigestMatches(
+        const auto &plate = cloakframe::plateModel();
+        assert(cloakframe::modelDigestMatches(
             plate, QByteArray::fromHex(plate.sha256.toLatin1())));
     }
 
@@ -155,10 +155,10 @@ namespace
 
     void testSupportedImageExtensions()
     {
-        assert(redactly::isSupportedImage("photo.jpg"));
-        assert(redactly::isSupportedImage("photo.JPEG"));
-        assert(redactly::isSupportedImage("photo.webp"));
-        assert(!redactly::isSupportedImage("photo.txt"));
+        assert(cloakframe::isSupportedImage("photo.jpg"));
+        assert(cloakframe::isSupportedImage("photo.JPEG"));
+        assert(cloakframe::isSupportedImage("photo.webp"));
+        assert(!cloakframe::isSupportedImage("photo.txt"));
     }
 
     void testScanImagesRecursesAndDeduplicates()
@@ -177,10 +177,10 @@ namespace
         writeBytes(second);
         writeBytes(ignored);
 
-        const auto nonRecursive = redactly::scanImages({root.filePath("a")}, false);
+        const auto nonRecursive = cloakframe::scanImages({root.filePath("a")}, false);
         assert(nonRecursive.size() == 1);
 
-        const auto recursive = redactly::scanImages({root.filePath("a"), first}, true);
+        const auto recursive = cloakframe::scanImages({root.filePath("a"), first}, true);
         assert(recursive.size() == 2);
 
         std::set<std::string> relativePaths;
@@ -200,25 +200,25 @@ namespace
         const auto output = root / "out";
         assert(std::filesystem::create_directories(output / "nested"));
 
-        const std::vector<redactly::ScanResult> unique = {
+        const std::vector<cloakframe::ScanResult> unique = {
             {root / "input" / "one.jpg", "one.jpg"},
             {root / "input" / "two.mov", "nested/two.mov"},
         };
-        assert(redactly::findOutputConflicts(unique, output).empty());
-        assert(redactly::outputRelativePath(unique[1]) == std::filesystem::path("nested/two.mp4"));
+        assert(cloakframe::findOutputConflicts(unique, output).empty());
+        assert(cloakframe::outputRelativePath(unique[1]) == std::filesystem::path("nested/two.mp4"));
 
         writeBytes(QString::fromStdString((output / "one.jpg").string()));
-        const auto existing = redactly::findOutputConflicts(unique, output);
+        const auto existing = cloakframe::findOutputConflicts(unique, output);
         assert(existing.size() == 1);
-        assert(existing[0].kind == redactly::OutputConflict::Kind::ExistingDestination);
+        assert(existing[0].kind == cloakframe::OutputConflict::Kind::ExistingDestination);
 
-        const std::vector<redactly::ScanResult> duplicate = {
+        const std::vector<cloakframe::ScanResult> duplicate = {
             {root / "a" / "same.jpg", "same.jpg"},
             {root / "b" / "same.jpg", "same.jpg"},
         };
-        const auto collisions = redactly::findOutputConflicts(duplicate, output);
+        const auto collisions = cloakframe::findOutputConflicts(duplicate, output);
         assert(collisions.size() == 1);
-        assert(collisions[0].kind == redactly::OutputConflict::Kind::DuplicateDestination);
+        assert(collisions[0].kind == cloakframe::OutputConflict::Kind::DuplicateDestination);
     }
 
     void testWorkerReportsUnredactedOutputAsWarningAndPreservesIt()
@@ -232,34 +232,34 @@ namespace
 
         auto makeWorker = [&]
         {
-            redactly::ProcessingRequest request;
+            cloakframe::ProcessingRequest request;
             request.inputs = {QString::fromStdString(source.string())};
             request.outputDirectory = QString::fromStdString(output.string());
             request.recursive = false;
             request.detectFaces = false;
-            return std::make_unique<redactly::ProcessorWorker>(std::move(request));
+            return std::make_unique<cloakframe::ProcessorWorker>(std::move(request));
         };
 
-        redactly::RunOutcome firstOutcome = redactly::RunOutcome::Failed;
-        redactly::RunSummary firstSummary;
+        cloakframe::RunOutcome firstOutcome = cloakframe::RunOutcome::Failed;
+        cloakframe::RunSummary firstSummary;
         auto first = makeWorker();
-        QObject::connect(first.get(), &redactly::ProcessorWorker::summaryAvailable,
-                         [&](const redactly::RunSummary summary) { firstSummary = summary; });
-        QObject::connect(first.get(), &redactly::ProcessorWorker::finished,
-                         [&](const redactly::RunOutcome outcome) { firstOutcome = outcome; });
+        QObject::connect(first.get(), &cloakframe::ProcessorWorker::summaryAvailable,
+                         [&](const cloakframe::RunSummary summary) { firstSummary = summary; });
+        QObject::connect(first.get(), &cloakframe::ProcessorWorker::finished,
+                         [&](const cloakframe::RunOutcome outcome) { firstOutcome = outcome; });
         first->process();
-        assert(firstOutcome == redactly::RunOutcome::CompletedWithWarnings);
+        assert(firstOutcome == cloakframe::RunOutcome::CompletedWithWarnings);
         assert(firstSummary.total == 1 && firstSummary.redacted == 0 &&
                firstSummary.unredacted == 1);
         assert(std::filesystem::exists(output / "input.png"));
 
         const auto savedSize = std::filesystem::file_size(output / "input.png");
-        redactly::RunOutcome secondOutcome = redactly::RunOutcome::Completed;
+        cloakframe::RunOutcome secondOutcome = cloakframe::RunOutcome::Completed;
         auto second = makeWorker();
-        QObject::connect(second.get(), &redactly::ProcessorWorker::finished,
-                         [&](const redactly::RunOutcome outcome) { secondOutcome = outcome; });
+        QObject::connect(second.get(), &cloakframe::ProcessorWorker::finished,
+                         [&](const cloakframe::RunOutcome outcome) { secondOutcome = outcome; });
         second->process();
-        assert(secondOutcome == redactly::RunOutcome::Failed);
+        assert(secondOutcome == cloakframe::RunOutcome::Failed);
         assert(std::filesystem::file_size(output / "input.png") == savedSize);
     }
 
@@ -273,7 +273,7 @@ namespace
         assert(cv::imwrite(source.string(), cv::Mat(24, 24, CV_8UC3,
                                                     cv::Scalar(20, 40, 60))));
 
-        qRegisterMetaType<redactly::ReviewResult>("redactly::ReviewResult");
+        qRegisterMetaType<cloakframe::ReviewResult>("cloakframe::ReviewResult");
         QThread reviewThread;
         auto *reviewer = new CopyOriginalReviewer;
         reviewer->moveToThread(&reviewThread);
@@ -281,25 +281,25 @@ namespace
                          reviewer, &QObject::deleteLater);
         reviewThread.start();
 
-        redactly::ProcessingRequest request;
+        cloakframe::ProcessingRequest request;
         request.inputs = {QString::fromStdString(source.string())};
         request.outputDirectory = QString::fromStdString(output.string());
         request.detectFaces = false;
         request.reviewEnabled = true;
         request.reviewReceiver = reviewer;
 
-        redactly::RunOutcome result = redactly::RunOutcome::Failed;
-        redactly::RunSummary summary;
-        redactly::ProcessorWorker worker(std::move(request));
-        QObject::connect(&worker, &redactly::ProcessorWorker::summaryAvailable,
-                         [&](const redactly::RunSummary value) { summary = value; });
-        QObject::connect(&worker, &redactly::ProcessorWorker::finished,
-                         [&](const redactly::RunOutcome value) { result = value; });
+        cloakframe::RunOutcome result = cloakframe::RunOutcome::Failed;
+        cloakframe::RunSummary summary;
+        cloakframe::ProcessorWorker worker(std::move(request));
+        QObject::connect(&worker, &cloakframe::ProcessorWorker::summaryAvailable,
+                         [&](const cloakframe::RunSummary value) { summary = value; });
+        QObject::connect(&worker, &cloakframe::ProcessorWorker::finished,
+                         [&](const cloakframe::RunOutcome value) { result = value; });
         worker.process();
 
         reviewThread.quit();
         assert(reviewThread.wait());
-        assert(result == redactly::RunOutcome::CompletedWithWarnings);
+        assert(result == cloakframe::RunOutcome::CompletedWithWarnings);
         assert(summary.total == 1 && summary.copied == 1);
         assert(std::filesystem::exists(output / "input.png"));
     }
@@ -330,7 +330,7 @@ namespace
                          reviewer, &QObject::deleteLater);
         reviewThread.start();
 
-        redactly::ProcessingRequest request;
+        cloakframe::ProcessingRequest request;
         request.inputs = {QString::fromStdString(source.string())};
         request.outputDirectory = QString::fromStdString(output.string());
         request.detectFaces = false;
@@ -338,15 +338,15 @@ namespace
         request.reviewReceiver = reviewer;
         request.preserveMetadata = true;
 
-        redactly::RunOutcome result = redactly::RunOutcome::Failed;
-        redactly::ProcessorWorker worker(std::move(request));
-        QObject::connect(&worker, &redactly::ProcessorWorker::finished,
-                         [&](const redactly::RunOutcome value) { result = value; });
+        cloakframe::RunOutcome result = cloakframe::RunOutcome::Failed;
+        cloakframe::ProcessorWorker worker(std::move(request));
+        QObject::connect(&worker, &cloakframe::ProcessorWorker::finished,
+                         [&](const cloakframe::RunOutcome value) { result = value; });
         worker.process();
 
         reviewThread.quit();
         assert(reviewThread.wait());
-        assert(result == redactly::RunOutcome::CompletedWithWarnings);
+        assert(result == cloakframe::RunOutcome::CompletedWithWarnings);
         QFile outputFile(QString::fromStdString((output / "input.png").string()));
         assert(outputFile.open(QIODevice::ReadOnly));
         assert(outputFile.readAll() == originalBytes);
@@ -363,17 +363,17 @@ namespace
                                                     cv::Scalar(40, 80, 120))));
         std::filesystem::resize_file(source, 31ULL * 1024ULL * 1024ULL);
 
-        redactly::ProcessingRequest request;
+        cloakframe::ProcessingRequest request;
         request.inputs = {QString::fromStdString(source.string())};
         request.outputDirectory = QString::fromStdString(output.string());
         request.detectFaces = false;
 
-        redactly::RunOutcome result = redactly::RunOutcome::Failed;
-        redactly::ProcessorWorker worker(std::move(request));
-        QObject::connect(&worker, &redactly::ProcessorWorker::finished,
-                         [&](const redactly::RunOutcome value) { result = value; });
+        cloakframe::RunOutcome result = cloakframe::RunOutcome::Failed;
+        cloakframe::ProcessorWorker worker(std::move(request));
+        QObject::connect(&worker, &cloakframe::ProcessorWorker::finished,
+                         [&](const cloakframe::RunOutcome value) { result = value; });
         worker.process();
-        assert(result == redactly::RunOutcome::CompletedWithWarnings);
+        assert(result == cloakframe::RunOutcome::CompletedWithWarnings);
         assert(std::filesystem::exists(output / "large.jpg"));
     }
 
@@ -390,26 +390,26 @@ namespace
             cv::Mat(12, 16, CV_8UC3, cv::Scalar(80, 100, 120)),
         };
         assert(cv::imwritemulti(source.string(), pages));
-        assert(redactly::imageFrameCount(source) == 2);
+        assert(cloakframe::imageFrameCount(source) == 2);
 
-        redactly::ProcessingRequest request;
+        cloakframe::ProcessingRequest request;
         request.inputs = {QString::fromStdString(source.string())};
         request.outputDirectory = QString::fromStdString(output.string());
         request.detectFaces = false;
 
-        redactly::RunOutcome result = redactly::RunOutcome::Failed;
-        redactly::RunSummary summary;
+        cloakframe::RunOutcome result = cloakframe::RunOutcome::Failed;
+        cloakframe::RunSummary summary;
         QStringList messages;
-        redactly::ProcessorWorker worker(std::move(request));
-        QObject::connect(&worker, &redactly::ProcessorWorker::summaryAvailable,
-                         [&](const redactly::RunSummary value) { summary = value; });
-        QObject::connect(&worker, &redactly::ProcessorWorker::logMessage,
+        cloakframe::ProcessorWorker worker(std::move(request));
+        QObject::connect(&worker, &cloakframe::ProcessorWorker::summaryAvailable,
+                         [&](const cloakframe::RunSummary value) { summary = value; });
+        QObject::connect(&worker, &cloakframe::ProcessorWorker::logMessage,
                          [&](const QString &message) { messages.push_back(message); });
-        QObject::connect(&worker, &redactly::ProcessorWorker::finished,
-                         [&](const redactly::RunOutcome value) { result = value; });
+        QObject::connect(&worker, &cloakframe::ProcessorWorker::finished,
+                         [&](const cloakframe::RunOutcome value) { result = value; });
         worker.process();
 
-        assert(result == redactly::RunOutcome::CompletedWithWarnings);
+        assert(result == cloakframe::RunOutcome::CompletedWithWarnings);
         assert(summary.total == 1 && summary.skipped == 1);
         assert(!std::filesystem::exists(output / "pages.tiff"));
         assert(std::ranges::any_of(messages, [](const QString &message)
@@ -431,7 +431,7 @@ namespace
             0x00, 0x00, 0x00, 0x03, 0x00, 0x00, 0x00, 0x00,
             0x00, 0x00, 0x00, 0x00,
         });
-        assert(redactly::imageFrameCount(apng) > 1);
+        assert(cloakframe::imageFrameCount(apng) > 1);
 
         const auto webp = root / "animated.webp";
         writeBytes(webp, {
@@ -440,7 +440,7 @@ namespace
             'V', 'P', '8', 'X', 0x0A, 0x00, 0x00, 0x00,
             0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
         });
-        assert(redactly::imageFrameCount(webp) > 1);
+        assert(cloakframe::imageFrameCount(webp) > 1);
 
         const auto bigTiff = root / "pages-bigtiff.tiff";
         writeBytes(bigTiff, {
@@ -451,7 +451,7 @@ namespace
             0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
             0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
         });
-        assert(redactly::imageFrameCount(bigTiff) > 1);
+        assert(cloakframe::imageFrameCount(bigTiff) > 1);
     }
 
     void testApplyMosaicTouchesOnlyDetectedRegion()
@@ -470,9 +470,9 @@ namespace
         const cv::Vec3b outsideBefore = image.at<cv::Vec3b>(0, 0);
         const cv::Vec3b insideBefore = image.at<cv::Vec3b>(3, 3);
 
-        redactly::FaceDetections detections;
+        cloakframe::FaceDetections detections;
         detections.push_back({cv::Rect2f(2.0F, 2.0F, 4.0F, 4.0F), 1.0F});
-        redactly::applyMosaic(image, detections, 4, 0.0F);
+        cloakframe::applyMosaic(image, detections, 4, 0.0F);
 
         assert(image.at<cv::Vec3b>(0, 0) == outsideBefore);
         assert(image.at<cv::Vec3b>(3, 3) != insideBefore);
@@ -483,10 +483,10 @@ namespace
         cv::Mat image(64, 64, CV_8UC3, cv::Scalar(100, 100, 100));
         const cv::Rect box(24, 24, 16, 16);
 
-        redactly::FaceDetections detections;
+        cloakframe::FaceDetections detections;
         detections.push_back({cv::Rect2f(box), 1.0F});
-        redactly::applyAnonymization(image, detections, redactly::AnonymizationMethod::Fill,
-                                     4, 0.0F, redactly::MaskShape::Rectangle, true);
+        cloakframe::applyAnonymization(image, detections, cloakframe::AnonymizationMethod::Fill,
+                                     4, 0.0F, cloakframe::MaskShape::Rectangle, true);
 
         for (int y = box.y; y < box.y + box.height; ++y)
         {
@@ -508,10 +508,10 @@ namespace
         cv::Mat image(64, 64, CV_8UC3, cv::Scalar(100, 100, 100));
         const cv::Rect box(20, 20, 24, 24);
 
-        redactly::FaceDetections detections;
+        cloakframe::FaceDetections detections;
         detections.push_back({cv::Rect2f(box), 1.0F});
-        redactly::applyAnonymization(image, detections, redactly::AnonymizationMethod::Fill,
-                                     4, 0.0F, redactly::MaskShape::Ellipse, true);
+        cloakframe::applyAnonymization(image, detections, cloakframe::AnonymizationMethod::Fill,
+                                     4, 0.0F, cloakframe::MaskShape::Ellipse, true);
 
         const int centerX = box.x + box.width / 2;
         const int centerY = box.y + box.height / 2;
@@ -530,11 +530,11 @@ namespace
     {
         cv::Mat image(32, 32, CV_8UC3, cv::Scalar(100, 100, 100));
 
-        redactly::FaceDetections detections;
+        cloakframe::FaceDetections detections;
         detections.push_back({cv::Rect2f(0.0F, 0.0F, 12.0F, 12.0F), 1.0F});
         detections.push_back({cv::Rect2f(24.0F, 24.0F, 8.0F, 8.0F), 1.0F});
-        redactly::applyAnonymization(image, detections, redactly::AnonymizationMethod::Fill,
-                                     4, 0.0F, redactly::MaskShape::Rectangle, true);
+        cloakframe::applyAnonymization(image, detections, cloakframe::AnonymizationMethod::Fill,
+                                     4, 0.0F, cloakframe::MaskShape::Rectangle, true);
 
         assert(image.at<cv::Vec3b>(0, 0) == cv::Vec3b(0, 0, 0));
         assert(image.at<cv::Vec3b>(31, 31) == cv::Vec3b(0, 0, 0));
@@ -545,10 +545,10 @@ namespace
         cv::Mat image(96, 96, CV_8UC3, cv::Scalar(100, 100, 100));
         const cv::Rect box(32, 32, 32, 32);
 
-        redactly::FaceDetections detections;
+        cloakframe::FaceDetections detections;
         detections.push_back({cv::Rect2f(box), 1.0F});
-        redactly::applyAnonymization(image, detections, redactly::AnonymizationMethod::Fill,
-                                     4, 0.25F, redactly::MaskShape::Rectangle, true);
+        cloakframe::applyAnonymization(image, detections, cloakframe::AnonymizationMethod::Fill,
+                                     4, 0.25F, cloakframe::MaskShape::Rectangle, true);
 
         for (int y = box.y; y < box.y + box.height; ++y)
         {
@@ -571,11 +571,11 @@ namespace
     void testLargeSoftEdgeMaskUsesBoundedWorkingMemoryPath()
     {
         cv::Mat image(1500, 1500, CV_8UC3, cv::Scalar(100, 100, 100));
-        redactly::FaceDetections detections;
+        cloakframe::FaceDetections detections;
         detections.push_back({cv::Rect2f(100.0F, 100.0F, 1300.0F, 1300.0F), 1.0F});
 
-        redactly::applyAnonymization(image, detections, redactly::AnonymizationMethod::Fill,
-                                     8, 0.0F, redactly::MaskShape::Rectangle, true);
+        cloakframe::applyAnonymization(image, detections, cloakframe::AnonymizationMethod::Fill,
+                                     8, 0.0F, cloakframe::MaskShape::Rectangle, true);
 
         assert(image.at<cv::Vec3b>(750, 750) == cv::Vec3b(0, 0, 0));
         assert(image.at<cv::Vec3b>(0, 0) == cv::Vec3b(100, 100, 100));
@@ -589,11 +589,11 @@ namespace
         cv::Mat image(96, 96, CV_8UC3, cv::Scalar(100, 100, 100));
         const cv::Rect box(32, 32, 32, 32);
 
-        redactly::FaceDetections detections;
+        cloakframe::FaceDetections detections;
         detections.push_back({cv::Rect2f(box), 1.0F});
-        redactly::applyAnonymization(image, detections,
-                                     redactly::AnonymizationMethod::Sticker,
-                                     4, 0.0F, redactly::MaskShape::Ellipse, true);
+        cloakframe::applyAnonymization(image, detections,
+                                     cloakframe::AnonymizationMethod::Sticker,
+                                     4, 0.0F, cloakframe::MaskShape::Ellipse, true);
 
         for (int y = box.y; y < box.y + box.height; ++y)
         {
@@ -618,16 +618,16 @@ namespace
         }
 
         cv::Mat identity = base.clone();
-        redactly::applyOrientation(identity, 1);
+        cloakframe::applyOrientation(identity, 1);
         assert(cv::countNonZero(identity != base) == 0);
 
         cv::Mat rotated = base.clone();
-        redactly::applyOrientation(rotated, 6);
+        cloakframe::applyOrientation(rotated, 6);
         assert(rotated.rows == 3 && rotated.cols == 2);
         assert(rotated.at<uchar>(0, 0) == base.at<uchar>(base.rows - 1, 0));
 
         cv::Mat mirrored = base.clone();
-        redactly::applyOrientation(mirrored, 2);
+        cloakframe::applyOrientation(mirrored, 2);
         assert(mirrored.rows == 2 && mirrored.cols == 3);
         assert(mirrored.at<uchar>(0, 0) == base.at<uchar>(0, base.cols - 1));
     }
@@ -641,26 +641,26 @@ namespace
         {
             const auto path = root / ("orientation-" + std::to_string(orientation) + ".jpg");
             writeJpegWithExifOrientation(path, orientation);
-            assert(redactly::readExifOrientation(path) == orientation);
+            assert(cloakframe::readExifOrientation(path) == orientation);
         }
 
         const auto path = root / "orientation-6.jpg";
-        cv::Mat image = redactly::imreadUnicode(path, cv::IMREAD_UNCHANGED);
+        cv::Mat image = cloakframe::imreadUnicode(path, cv::IMREAD_UNCHANGED);
         assert(image.rows == 2 && image.cols == 3);
-        redactly::applyOrientation(image, redactly::readExifOrientation(path));
+        cloakframe::applyOrientation(image, cloakframe::readExifOrientation(path));
         assert(image.rows == 3 && image.cols == 2);
     }
 
     void testEncodeParams()
     {
-        const auto jpeg = redactly::encodeParamsForExtension(".JPG");
+        const auto jpeg = cloakframe::encodeParamsForExtension(".JPG");
         assert(std::find(jpeg.begin(), jpeg.end(), cv::IMWRITE_JPEG_QUALITY) != jpeg.end());
         assert(std::find(jpeg.begin(), jpeg.end(), 100) != jpeg.end());
 
-        const auto png = redactly::encodeParamsForExtension("png");
+        const auto png = cloakframe::encodeParamsForExtension("png");
         assert(std::find(png.begin(), png.end(), cv::IMWRITE_PNG_COMPRESSION) != png.end());
 
-        assert(redactly::encodeParamsForExtension(".bmp").empty());
+        assert(cloakframe::encodeParamsForExtension(".bmp").empty());
     }
 
     void testImageWritePublishesWithoutReplacing()
@@ -672,7 +672,7 @@ namespace
 
         writeBytes(QString::fromStdString(destination.string()));
         const cv::Mat first(128, 128, CV_8UC3, cv::Scalar(20, 40, 60));
-        assert(!redactly::imwriteUnicodeNoReplace(destination, first));
+        assert(!cloakframe::imwriteUnicodeNoReplace(destination, first));
         assert(std::filesystem::file_size(destination) == 1);
         assert(std::filesystem::remove(destination));
 
@@ -682,7 +682,7 @@ namespace
         const auto write = [&](const cv::Mat &image)
         {
             start.arrive_and_wait();
-            if (redactly::imwriteUnicodeNoReplace(destination, image))
+            if (cloakframe::imwriteUnicodeNoReplace(destination, image))
             {
                 successes.fetch_add(1, std::memory_order_relaxed);
             }
@@ -697,7 +697,7 @@ namespace
         assert(!cv::imread(destination.string(), cv::IMREAD_UNCHANGED).empty());
         for (const auto &entry: std::filesystem::directory_iterator(root))
         {
-            assert(entry.path().filename().string().find(".redactly-") == std::string::npos);
+            assert(entry.path().filename().string().find(".cloakframe-") == std::string::npos);
         }
     }
 
@@ -713,11 +713,11 @@ namespace
         assert(std::filesystem::create_directories(outside));
 
         const cv::Mat image(32, 32, CV_8UC3, cv::Scalar(30, 60, 90));
-        assert(redactly::imwriteUnicodeNoReplaceAtRoot(
-                   root, "nested/result.png", image) == redactly::ImageWriteResult::Saved);
+        assert(cloakframe::imwriteUnicodeNoReplaceAtRoot(
+                   root, "nested/result.png", image) == cloakframe::ImageWriteResult::Saved);
         assert(!cv::imread((root / "nested/result.png").string()).empty());
-        assert(redactly::imwriteUnicodeNoReplaceAtRoot(
-                   root, "../outside/escaped.png", image) == redactly::ImageWriteResult::Failed);
+        assert(cloakframe::imwriteUnicodeNoReplaceAtRoot(
+                   root, "../outside/escaped.png", image) == cloakframe::ImageWriteResult::Failed);
         assert(!std::filesystem::exists(outside / "escaped.png"));
 
         const auto source = base / "original.bin";
@@ -726,7 +726,7 @@ namespace
 #ifndef _WIN32
         assert(::chmod(source.c_str(), 0600) == 0);
 #endif
-        assert(redactly::copyFileNoReplaceAtRoot(source, root, "copies/original.bin"));
+        assert(cloakframe::copyFileNoReplaceAtRoot(source, root, "copies/original.bin"));
         std::ifstream copied(root / "copies/original.bin", std::ios::binary);
         const std::istreambuf_iterator<char> copiedBegin(copied);
         const std::istreambuf_iterator<char> copiedEnd;
@@ -735,9 +735,9 @@ namespace
 
         const auto moveSource = base / "move-source.bin";
         writeBytes(moveSource, sourceBytes);
-        assert(redactly::moveFileNoReplaceAtRoot(
+        assert(cloakframe::moveFileNoReplaceAtRoot(
                    moveSource, root, "moves/moved.bin") ==
-               redactly::FileMoveResult::Moved);
+               cloakframe::FileMoveResult::Moved);
         assert(!std::filesystem::exists(moveSource));
         std::ifstream moved(root / "moves/moved.bin", std::ios::binary);
         const std::istreambuf_iterator<char> movedBegin(moved);
@@ -753,9 +753,9 @@ namespace
 #ifndef _WIN32
         assert(::chmod(blockedSource.c_str(), 0640) == 0);
 #endif
-        assert(redactly::moveFileNoReplaceAtRoot(
+        assert(cloakframe::moveFileNoReplaceAtRoot(
                    blockedSource, root, "moves/existing.bin") ==
-               redactly::FileMoveResult::Failed);
+               cloakframe::FileMoveResult::Failed);
         assert(std::filesystem::exists(blockedSource));
         std::ifstream existing(blockedDestination, std::ios::binary);
         const std::istreambuf_iterator<char> existingBegin(existing);
@@ -770,11 +770,11 @@ namespace
 
         const auto guardedSource = base / "guarded-source.bin";
         writeBytes(guardedSource, sourceBytes);
-        assert(redactly::moveFileNoReplaceAtRoot(
+        assert(cloakframe::moveFileNoReplaceAtRoot(
                    guardedSource, root, "moves/guarded.bin", []
                    {
                        return false;
-                   }) == redactly::FileMoveResult::Failed);
+                   }) == cloakframe::FileMoveResult::Failed);
         assert(std::filesystem::exists(guardedSource));
         assert(!std::filesystem::exists(root / "moves/guarded.bin"));
 #ifndef _WIN32
@@ -785,14 +785,14 @@ namespace
         std::error_code ec;
         std::filesystem::create_directory_symlink(outside, root / "linked", ec);
         assert(!ec);
-        assert(redactly::imwriteUnicodeNoReplaceAtRoot(
-                   root, "linked/escaped.png", image) == redactly::ImageWriteResult::Failed);
+        assert(cloakframe::imwriteUnicodeNoReplaceAtRoot(
+                   root, "linked/escaped.png", image) == cloakframe::ImageWriteResult::Failed);
         assert(!std::filesystem::exists(outside / "escaped.png"));
 #endif
 
         for (const auto &entry: std::filesystem::recursive_directory_iterator(root))
         {
-            assert(!entry.path().filename().string().starts_with(".redactly-"));
+            assert(!entry.path().filename().string().starts_with(".cloakframe-"));
         }
     }
 
@@ -803,36 +803,36 @@ namespace
         const auto root = std::filesystem::canonical(
             std::filesystem::path(temp.path().toStdString()));
         const cv::Mat image(24, 24, CV_8UC3, cv::Scalar(15, 45, 75));
-        const auto result = redactly::imwriteUnicodeNoReplaceAtRoot(
-            root, "result.jpg", image, redactly::encodeParamsForExtension("jpg"),
+        const auto result = cloakframe::imwriteUnicodeNoReplaceAtRoot(
+            root, "result.jpg", image, cloakframe::encodeParamsForExtension("jpg"),
             root / "missing-metadata-source.jpg");
-        assert(result == redactly::ImageWriteResult::SavedWithoutMetadata);
+        assert(result == cloakframe::ImageWriteResult::SavedWithoutMetadata);
         assert(!cv::imread((root / "result.jpg").string()).empty());
     }
 
     void testIntersectionOverUnion()
     {
         const cv::Rect2f a(0.0F, 0.0F, 10.0F, 10.0F);
-        assert(std::abs(redactly::intersectionOverUnion(a, a) - 1.0F) < 1e-5F);
+        assert(std::abs(cloakframe::intersectionOverUnion(a, a) - 1.0F) < 1e-5F);
 
         const cv::Rect2f disjoint(100.0F, 100.0F, 10.0F, 10.0F);
-        assert(redactly::intersectionOverUnion(a, disjoint) == 0.0F);
+        assert(cloakframe::intersectionOverUnion(a, disjoint) == 0.0F);
 
         const cv::Rect2f empty(0.0F, 0.0F, 0.0F, 0.0F);
-        assert(redactly::intersectionOverUnion(a, empty) == 0.0F);
+        assert(cloakframe::intersectionOverUnion(a, empty) == 0.0F);
 
         const cv::Rect2f halfShifted(5.0F, 0.0F, 10.0F, 10.0F);
-        assert(std::abs(redactly::intersectionOverUnion(a, halfShifted) - (50.0F / 150.0F)) < 1e-5F);
+        assert(std::abs(cloakframe::intersectionOverUnion(a, halfShifted) - (50.0F / 150.0F)) < 1e-5F);
     }
 
     void testNonMaxSuppression()
     {
-        redactly::FaceDetections detections;
+        cloakframe::FaceDetections detections;
         detections.push_back({cv::Rect2f(0.0F, 0.0F, 10.0F, 10.0F), 0.9F});
         detections.push_back({cv::Rect2f(1.0F, 1.0F, 10.0F, 10.0F), 0.8F});
         detections.push_back({cv::Rect2f(100.0F, 100.0F, 10.0F, 10.0F), 0.7F});
 
-        const auto kept = redactly::nonMaxSuppression(detections, 0.4F);
+        const auto kept = cloakframe::nonMaxSuppression(detections, 0.4F);
         assert(kept.size() == 2);
         assert(kept[0].score == 0.9F);
         assert(kept[1].box.x == 100.0F);
@@ -841,19 +841,19 @@ namespace
     void testInvalidDetectionsAreIgnored()
     {
         const float nan = std::numeric_limits<float>::quiet_NaN();
-        redactly::FaceDetections detections = {
+        cloakframe::FaceDetections detections = {
             {cv::Rect2f(nan, 0.0F, 10.0F, 10.0F), 0.9F},
             {cv::Rect2f(0.0F, 0.0F, 10.0F, 10.0F), nan},
             {cv::Rect2f(2.0F, 2.0F, 8.0F, 8.0F), 0.8F},
         };
-        const auto kept = redactly::nonMaxSuppression(detections, 0.4F);
+        const auto kept = cloakframe::nonMaxSuppression(detections, 0.4F);
         assert(kept.size() == 1);
 
         cv::Mat image(16, 16, CV_8UC3, cv::Scalar(30, 60, 90));
         const cv::Mat before = image.clone();
-        redactly::applyAnonymization(
+        cloakframe::applyAnonymization(
             image, {{cv::Rect2f(0.0F, nan, 10.0F, 10.0F), 0.9F}},
-            redactly::AnonymizationMethod::Fill, 8, 0.0F);
+            cloakframe::AnonymizationMethod::Fill, 8, 0.0F);
         assert(cv::norm(image, before, cv::NORM_INF) == 0.0);
     }
 
@@ -865,14 +865,14 @@ namespace
             std::filesystem::path(temp.path().toStdString()) / "out";
         assert(std::filesystem::create_directories(root));
 
-        assert(redactly::destinationIsSafe(root / "a.jpg", root));
-        assert(redactly::destinationIsSafe(root / "sub" / "b.png", root));
-        assert(redactly::destinationIsSafe(root, root));
+        assert(cloakframe::destinationIsSafe(root / "a.jpg", root));
+        assert(cloakframe::destinationIsSafe(root / "sub" / "b.png", root));
+        assert(cloakframe::destinationIsSafe(root, root));
 
-        assert(!redactly::destinationIsSafe(root / ".." / "escape.jpg", root));
+        assert(!cloakframe::destinationIsSafe(root / ".." / "escape.jpg", root));
 
-        assert(redactly::isWithinRoot(root / "x.jpg", root));
-        assert(!redactly::isWithinRoot(root.parent_path() / "x.jpg", root));
+        assert(cloakframe::isWithinRoot(root / "x.jpg", root));
+        assert(!cloakframe::isWithinRoot(root.parent_path() / "x.jpg", root));
     }
 
 #ifndef _WIN32
@@ -891,7 +891,7 @@ namespace
         std::filesystem::create_directory_symlink(outside, link, ec);
         assert(!ec);
 
-        assert(!redactly::destinationIsSafe(link / "leak.jpg", root));
+        assert(!cloakframe::destinationIsSafe(link / "leak.jpg", root));
 
         const std::filesystem::path danglingTarget = outside / "not-created.jpg";
         const std::filesystem::path danglingLink = root / "dangling.jpg";
@@ -899,26 +899,26 @@ namespace
         assert(!ec);
         assert(!std::filesystem::exists(danglingLink));
         assert(std::filesystem::is_symlink(std::filesystem::symlink_status(danglingLink)));
-        assert(!redactly::destinationIsSafe(danglingLink, root));
+        assert(!cloakframe::destinationIsSafe(danglingLink, root));
 
-        const std::vector<redactly::ScanResult> planned = {
+        const std::vector<cloakframe::ScanResult> planned = {
             {base / "input" / "dangling.jpg", "dangling.jpg"},
         };
-        const auto conflicts = redactly::findOutputConflicts(planned, root);
+        const auto conflicts = cloakframe::findOutputConflicts(planned, root);
         assert(conflicts.size() == 1);
         assert(conflicts.front().kind ==
-               redactly::OutputConflict::Kind::ExistingDestination);
+               cloakframe::OutputConflict::Kind::ExistingDestination);
 
         const auto source = base / "source.jpg";
         assert(cv::imwrite(source.string(), cv::Mat(8, 8, CV_8UC3, cv::Scalar(1, 2, 3))));
-        assert(!redactly::copyFileNoReplace(source, danglingLink));
-        assert(!redactly::imwriteUnicodeNoReplace(
+        assert(!cloakframe::copyFileNoReplace(source, danglingLink));
+        assert(!cloakframe::imwriteUnicodeNoReplace(
             danglingLink, cv::Mat(8, 8, CV_8UC3, cv::Scalar(4, 5, 6))));
         assert(!std::filesystem::exists(danglingTarget));
     }
 #endif
 
-#ifdef REDACTLY_HAVE_EXIV2
+#ifdef CLOAKFRAME_HAVE_EXIV2
     void testMetadataCopyAndOrientationNormalize()
     {
         QTemporaryDir temp;
@@ -946,8 +946,8 @@ namespace
             image->writeMetadata();
         }
 
-        assert(redactly::readExifOrientation(src) == 6);
-        assert(redactly::copyMetadata(src, dst, true));
+        assert(cloakframe::readExifOrientation(src) == 6);
+        assert(cloakframe::copyMetadata(src, dst, true));
 
         {
             auto image = Exiv2::ImageFactory::open(dst.string());
@@ -975,10 +975,10 @@ namespace
         }
 
         const auto published = root / "published.jpg";
-        assert(redactly::imwriteUnicodeNoReplaceAtRoot(
+        assert(cloakframe::imwriteUnicodeNoReplaceAtRoot(
                    root, published.filename(), img,
-                   redactly::encodeParamsForExtension("jpg"), src) ==
-               redactly::ImageWriteResult::Saved);
+                   cloakframe::encodeParamsForExtension("jpg"), src) ==
+               cloakframe::ImageWriteResult::Saved);
         auto publishedMetadata = Exiv2::ImageFactory::open(published.string());
         publishedMetadata->readMetadata();
         const auto artist = publishedMetadata->exifData().findKey(
@@ -1029,7 +1029,7 @@ namespace
             assert(exifThumbnailBytes(image->exifData()) > 0);
         }
 
-        assert(redactly::copyMetadata(src, dst, true));
+        assert(cloakframe::copyMetadata(src, dst, true));
 
         {
             auto image = Exiv2::ImageFactory::open(dst.string());
@@ -1061,7 +1061,7 @@ namespace
         bool faceRejected = false;
         try
         {
-            redactly::ScrfdFaceDetector detector(modelPath.toStdString(), 640, false,
+            cloakframe::ScrfdFaceDetector detector(modelPath.toStdString(), 640, false,
                                                   unexpectedHash);
         }
         catch (const std::runtime_error &error)
@@ -1073,7 +1073,7 @@ namespace
         bool plateRejected = false;
         try
         {
-            redactly::PlateDetector detector(modelPath.toStdString(), false, unexpectedHash);
+            cloakframe::PlateDetector detector(modelPath.toStdString(), false, unexpectedHash);
         }
         catch (const std::runtime_error &error)
         {
@@ -1084,11 +1084,11 @@ namespace
 
     void testOnnxPatchRejectsInvalidBytes()
     {
-        assert(!redactly::makeOnnxSpatialDimsFixed({}, 320).has_value());
+        assert(!cloakframe::makeOnnxSpatialDimsFixed({}, 320).has_value());
         const std::vector<std::uint8_t> garbage = {0xFF, 0xFF, 0xFF, 0x01, 0x02, 0x9C};
-        assert(!redactly::makeOnnxSpatialDimsFixed(garbage, 320).has_value());
-        assert(!redactly::makeOnnxSpatialDimsFixed(garbage, 0).has_value());
-        assert(!redactly::makeOnnxSpatialDimsFixed(garbage, -320).has_value());
+        assert(!cloakframe::makeOnnxSpatialDimsFixed(garbage, 320).has_value());
+        assert(!cloakframe::makeOnnxSpatialDimsFixed(garbage, 0).has_value());
+        assert(!cloakframe::makeOnnxSpatialDimsFixed(garbage, -320).has_value());
     }
 
     void testFixedScrfdModelRunsAtRequestedSize()
@@ -1101,10 +1101,10 @@ namespace
             return;
         }
 
-        redactly::ScrfdFaceDetector nativeSize(modelPath.string(), 640);
+        cloakframe::ScrfdFaceDetector nativeSize(modelPath.string(), 640);
         assert(nativeSize.inputSize() == 640);
 
-        redactly::ScrfdFaceDetector patchedSize(modelPath.string(), 320);
+        cloakframe::ScrfdFaceDetector patchedSize(modelPath.string(), 320);
         assert(patchedSize.inputSize() == 320);
 
         const cv::Mat blank(180, 320, CV_8UC3, cv::Scalar(30, 30, 30));
@@ -1121,7 +1121,7 @@ namespace
             return;
         }
 
-        redactly::ScrfdFaceDetector patchedSize(modelPath.string(), 320);
+        cloakframe::ScrfdFaceDetector patchedSize(modelPath.string(), 320);
         assert(patchedSize.inputSize() == 320);
 
         const cv::Mat blank(180, 320, CV_8UC3, cv::Scalar(30, 30, 30));
@@ -1167,7 +1167,7 @@ int main(int argc, char **argv)
 #ifndef _WIN32
     testDestinationRejectsSymlinkEscape();
 #endif
-#ifdef REDACTLY_HAVE_EXIV2
+#ifdef CLOAKFRAME_HAVE_EXIV2
     testMetadataCopyAndOrientationNormalize();
     testMetadataCopyStripsEmbeddedThumbnail();
 #endif

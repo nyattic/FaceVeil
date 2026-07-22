@@ -1,4 +1,4 @@
-#include "redactly/Mosaic.hpp"
+#include "cloakframe/Mosaic.hpp"
 
 #include <opencv2/core/version.hpp>
 #if CV_VERSION_MAJOR >= 5
@@ -15,7 +15,7 @@
 #include <tuple>
 #include <vector>
 
-namespace redactly
+namespace cloakframe
 {
     namespace
     {

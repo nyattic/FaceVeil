@@ -1,7 +1,7 @@
-#include "redactly/MainWindow.hpp"
-#include "redactly/ProcessorWorker.hpp"
-#include "redactly/ReviewTypes.hpp"
-#include "redactly/Theme.hpp"
+#include "cloakframe/MainWindow.hpp"
+#include "cloakframe/ProcessorWorker.hpp"
+#include "cloakframe/ReviewTypes.hpp"
+#include "cloakframe/Theme.hpp"
 
 #include <QApplication>
 #include <QDir>
@@ -21,12 +21,46 @@
 #include <memory>
 #include <vector>
 
-#ifndef REDACTLY_VERSION
-#define REDACTLY_VERSION "0.0.0"
+#ifndef CLOAKFRAME_VERSION
+#define CLOAKFRAME_VERSION "0.0.0"
 #endif
 
 namespace
 {
+    constexpr auto kOrganizationName = "CloakFrame";
+    constexpr auto kOrganizationDomain = "cloakframe.app";
+    constexpr auto kApplicationName = "CloakFrame";
+
+    void configureApplicationAndMigrateSettings()
+    {
+        QCoreApplication::setOrganizationName("Redactly");
+        QCoreApplication::setOrganizationDomain("redactly.app");
+        QCoreApplication::setApplicationName("Redactly");
+        QSettings legacySettings;
+
+        QCoreApplication::setOrganizationName(kOrganizationName);
+        QCoreApplication::setOrganizationDomain(kOrganizationDomain);
+        QCoreApplication::setApplicationName(kApplicationName);
+        QCoreApplication::setApplicationVersion(CLOAKFRAME_VERSION);
+
+        QSettings currentSettings;
+        constexpr auto kMigrationKey = "migration/redactlySettingsImported";
+        if (currentSettings.value(kMigrationKey, false).toBool())
+        {
+            return;
+        }
+
+        for (const auto &key: legacySettings.allKeys())
+        {
+            if (!currentSettings.contains(key))
+            {
+                currentSettings.setValue(key, legacySettings.value(key));
+            }
+        }
+        currentSettings.setValue(kMigrationKey, true);
+        currentSettings.sync();
+    }
+
     void setupLogging()
     {
         try
@@ -38,16 +72,16 @@ namespace
             const auto dataDir = QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation);
             if (fileLogging && !dataDir.isEmpty())
             {
-                const auto logDir = dataDir + "/Redactly/logs";
+                const auto logDir = dataDir + "/CloakFrame/logs";
                 if (QDir().mkpath(logDir))
                 {
-                    const auto logFile = (logDir + "/redactly.log").toStdString();
+                    const auto logFile = (logDir + "/cloakframe.log").toStdString();
                     sinks.push_back(std::make_shared<spdlog::sinks::rotating_file_sink_mt>(
                         logFile, 1024 * 1024, 3));
                 }
             }
 
-            auto logger = std::make_shared<spdlog::logger>("redactly", sinks.begin(), sinks.end());
+            auto logger = std::make_shared<spdlog::logger>("cloakframe", sinks.begin(), sinks.end());
             logger->set_pattern("[%Y-%m-%d %H:%M:%S.%e] [%l] %v");
             logger->flush_on(spdlog::level::info);
             spdlog::set_default_logger(logger);
@@ -64,23 +98,20 @@ int main(int argc, char *argv[])
 {
     QApplication app(argc, argv);
 
-    QCoreApplication::setOrganizationName("Redactly");
-    QCoreApplication::setOrganizationDomain("redactly.app");
-    QCoreApplication::setApplicationName("Redactly");
-    QCoreApplication::setApplicationVersion(REDACTLY_VERSION);
+    configureApplicationAndMigrateSettings();
 
     setupLogging();
 
     QApplication::setStyle(QStyleFactory::create("Fusion"));
     {
         QSettings settings;
-        const auto mode = redactly::themeModeFromString(settings.value("theme", "system").toString());
-        redactly::applyTheme(app, mode);
+        const auto mode = cloakframe::themeModeFromString(settings.value("theme", "system").toString());
+        cloakframe::applyTheme(app, mode);
     }
 
-    qRegisterMetaType<redactly::ReviewResult>("redactly::ReviewResult");
-    qRegisterMetaType<redactly::RunOutcome>("redactly::RunOutcome");
-    qRegisterMetaType<redactly::RunSummary>("redactly::RunSummary");
+    qRegisterMetaType<cloakframe::ReviewResult>("cloakframe::ReviewResult");
+    qRegisterMetaType<cloakframe::RunOutcome>("cloakframe::RunOutcome");
+    qRegisterMetaType<cloakframe::RunSummary>("cloakframe::RunSummary");
     qRegisterMetaType<QVector<QRectF> >("QVector<QRectF>");
 
 #ifdef Q_OS_MACOS
@@ -93,7 +124,7 @@ int main(int argc, char *argv[])
 #endif
     app.setFont(defaultFont);
 
-    redactly::MainWindow window;
+    cloakframe::MainWindow window;
     window.show();
     return QApplication::exec();
 }

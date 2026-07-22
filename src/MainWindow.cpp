@@ -1,20 +1,20 @@
-#include "redactly/MainWindow.hpp"
+#include "cloakframe/MainWindow.hpp"
 
-#include "redactly/ImageIo.hpp"
-#include "redactly/ImageScanner.hpp"
-#include "redactly/ModelCatalog.hpp"
-#include "redactly/ModelDownloader.hpp"
-#include "redactly/Mosaic.hpp"
-#include "redactly/PathUtil.hpp"
-#include "redactly/PlateDetector.hpp"
-#include "redactly/ProcessorWorker.hpp"
-#include "redactly/ReviewDialog.hpp"
-#include "redactly/ScrfdFaceDetector.hpp"
-#include "redactly/SettingsDialog.hpp"
-#include "redactly/Theme.hpp"
-#include "redactly/UpdateChecker.hpp"
-#include "redactly/VideoReviewDialog.hpp"
-#include "redactly/VideoIo.hpp"
+#include "cloakframe/ImageIo.hpp"
+#include "cloakframe/ImageScanner.hpp"
+#include "cloakframe/ModelCatalog.hpp"
+#include "cloakframe/ModelDownloader.hpp"
+#include "cloakframe/Mosaic.hpp"
+#include "cloakframe/PathUtil.hpp"
+#include "cloakframe/PlateDetector.hpp"
+#include "cloakframe/ProcessorWorker.hpp"
+#include "cloakframe/ReviewDialog.hpp"
+#include "cloakframe/ScrfdFaceDetector.hpp"
+#include "cloakframe/SettingsDialog.hpp"
+#include "cloakframe/Theme.hpp"
+#include "cloakframe/UpdateChecker.hpp"
+#include "cloakframe/VideoReviewDialog.hpp"
+#include "cloakframe/VideoIo.hpp"
 
 #include <QApplication>
 #include <QCheckBox>
@@ -71,7 +71,7 @@
 #include <algorithm>
 #include <cmath>
 
-namespace redactly
+namespace cloakframe
 {
     namespace
     {
@@ -91,9 +91,9 @@ namespace redactly
             const auto pictures = QStandardPaths::writableLocation(QStandardPaths::PicturesLocation);
             if (!pictures.isEmpty())
             {
-                return pictures + "/Redactly";
+                return pictures + "/CloakFrame";
             }
-            return QDir::homePath() + "/Redactly";
+            return QDir::homePath() + "/CloakFrame";
         }
 
         QLabel *makeSectionTitle(QWidget *parent)
@@ -242,10 +242,10 @@ namespace redactly
             {
                 QMenu menu(this);
                 QAction *removeAction = menu.addAction(
-                    QCoreApplication::translate("redactly::MainWindow", "Remove Selected"));
+                    QCoreApplication::translate("cloakframe::MainWindow", "Remove Selected"));
                 removeAction->setEnabled(!selectedItems().isEmpty());
                 QAction *clearAction = menu.addAction(
-                    QCoreApplication::translate("redactly::MainWindow", "Clear All"));
+                    QCoreApplication::translate("cloakframe::MainWindow", "Clear All"));
                 clearAction->setEnabled(count() > 0);
                 QAction *chosen = menu.exec(event->globalPos());
                 if (chosen == removeAction)
@@ -267,7 +267,7 @@ namespace redactly
     {
         qRegisterMetaType<VideoReviewRequest>();
         qRegisterMetaType<VideoReviewResult>();
-        setWindowTitle("Redactly");
+        setWindowTitle("CloakFrame");
         setAcceptDrops(true);
         resize(920, 760);
         setMinimumSize(720, 600);
@@ -296,7 +296,7 @@ namespace redactly
         auto *titleRow = new QHBoxLayout();
         titleRow->setContentsMargins(0, 0, 0, 0);
         titleRow->setSpacing(8);
-        auto *title = new QLabel("Redactly", header);
+        auto *title = new QLabel("CloakFrame", header);
         title->setObjectName("titleLabel");
 
         settingsButton_ = new QToolButton(header);
@@ -1650,7 +1650,7 @@ namespace redactly
                     message.setWindowTitle(tr("Update Available"));
                     message.setIcon(QMessageBox::Information);
                     message.setTextFormat(Qt::MarkdownText);
-                    message.setText(tr("Redactly %1 is available. What's new:")
+                    message.setText(tr("CloakFrame %1 is available. What's new:")
                                         .arg(latestVersion));
                     const QString localizedNotes = releaseNotesSection(releaseNotes);
                     message.setInformativeText(
@@ -2042,7 +2042,7 @@ namespace redactly
         qApp->removeTranslator(&qtTranslator_);
         if (language != "en")
         {
-            if (translator_.load(":/i18n/redactly_" + language + ".qm"))
+            if (translator_.load(":/i18n/cloakframe_" + language + ".qm"))
             {
                 qApp->installTranslator(&translator_);
             }

@@ -1,7 +1,7 @@
-#include "redactly/VideoIo.hpp"
+#include "cloakframe/VideoIo.hpp"
 
-#include "redactly/ImageIo.hpp"
-#include "redactly/PathUtil.hpp"
+#include "cloakframe/ImageIo.hpp"
+#include "cloakframe/PathUtil.hpp"
 
 #include <QCoreApplication>
 #include <QCryptographicHash>
@@ -31,7 +31,7 @@
 #include <limits>
 #include <mutex>
 
-namespace redactly
+namespace cloakframe
 {
     namespace
     {
@@ -46,7 +46,7 @@ namespace redactly
 
         QString trVideo(const char *text)
         {
-            return QCoreApplication::translate("redactly::VideoIo", text);
+            return QCoreApplication::translate("cloakframe::VideoIo", text);
         }
 
         QString executableName(const QString &base)
@@ -629,7 +629,7 @@ namespace redactly
 #if defined(_WIN32)
         server_ = std::make_unique<QLocalServer>();
         const QString pipeName =
-                QString("redactly-video-%1-%2")
+                QString("cloakframe-video-%1-%2")
                         .arg(QCoreApplication::applicationPid())
                         .arg(QRandomGenerator::global()->generate64(), 0, 16);
         if (!server_->listen(pipeName))
@@ -850,7 +850,7 @@ namespace redactly
                                         ? outputRootPath_
                                         : QFileInfo(destinationPath_).absolutePath();
         stagingDirectory_ = std::make_unique<QTemporaryDir>(
-            QDir(stagingBase).filePath(QStringLiteral(".redactly-encode-XXXXXX")));
+            QDir(stagingBase).filePath(QStringLiteral(".cloakframe-encode-XXXXXX")));
         if (!stagingDirectory_->isValid())
         {
             stagingDirectory_.reset();

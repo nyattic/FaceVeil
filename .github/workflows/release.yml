@@ -147,7 +147,7 @@ jobs:
         run: |
           $ver = ([regex]'VERSION ([0-9]+\.[0-9]+\.[0-9]+)').Match((Get-Content CMakeLists.txt -Raw)).Groups[1].Value
           New-Item -ItemType Directory -Force -Path artifacts | Out-Null
-          Compress-Archive -Path dist/windows/Redactly/* -DestinationPath "artifacts/Redactly-$ver-windows-x64.zip" -Force
+          Compress-Archive -Path dist/windows/CloakFrame/* -DestinationPath "artifacts/CloakFrame-$ver-windows-x64.zip" -Force
 
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
